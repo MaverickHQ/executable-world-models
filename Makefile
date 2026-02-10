@@ -21,6 +21,9 @@ demo-local:
 demo-local-planner:
 	python3 scripts/demo_local_planner.py
 
+demo-local-strategy:
+	python3 scripts/demo_local_strategy.py
+
 demo-local-bedrock:
 	python3 scripts/demo_local_bedrock_planner.py
 

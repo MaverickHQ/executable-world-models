@@ -120,6 +120,24 @@ make demo-local
 make demo-local-planner
 ```
 
+## Strategies (v0.3)
+
+Executable-world-models includes a JSON strategy spec that emits BUY/SELL/HOLD signals.
+Strategies live under `examples/strategies/` and are evaluated deterministically against
+the canonical price-path fixture.
+
+Run the local strategy demo:
+
+```bash
+make demo-local-strategy
+```
+
+Available examples:
+- `examples/strategies/threshold_demo.json`
+- `examples/strategies/sma_crossover_demo.json`
+- `examples/strategies/mean_reversion_demo.json`
+```
+
 ## Optional: Bedrock Planner (v2.1)
 
 The Bedrock planner proposes a plan only; verification remains authoritative.

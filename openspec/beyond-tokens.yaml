@@ -14,6 +14,11 @@ stages:
     description: >
       Learned dynamics and LLM-based proposers operating inside
       verified world-model constraints.
+  - id: v0.3
+    name: Strategy Specs (Signals)
+    description: >
+      JSON strategy specifications that emit deterministic BUY/SELL/HOLD
+      signals and can be exercised locally via a strategy demo.
 
 scope:
   v1:
@@ -25,3 +30,5 @@ scope:
   v2:
     - Agent-governed proposals and learned dynamics.
     - VL-JEPA-style learning belongs in this stage after execution exists.
+  v0.3:
+    - Strategy spec JSON schema, rules, and deterministic demos.
