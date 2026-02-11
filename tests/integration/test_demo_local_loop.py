@@ -34,6 +34,21 @@ def test_demo_local_loop_outputs(tmp_path, monkeypatch) -> None:
     assert any(row["decision"] == "APPROVED" for row in payload)
     assert all(row["decision"] == "APPROVED" for row in executions)
 
+    multi_action_steps = [
+        row["step_index"]
+        for row in payload
+        if row["decision"] == "APPROVED" and len(row.get("actions", [])) > 1
+    ]
+    if multi_action_steps:
+        step_index = multi_action_steps[0]
+        step_rows = [row for row in executions if row["step_index"] == step_index]
+        assert len(step_rows) > 1
+        assert step_rows[1]["cash_before"] == step_rows[0]["cash_after"]
+        for row in step_rows:
+            symbol = row["symbol"]
+            if f"{symbol}:" in row["reason"]:
+                assert row["reason"].startswith(f"{symbol}:")
+
     replay_tape = subprocess.run(
         ["python3", "scripts/replay_tape.py", "--tape", str(tape_path)],
         capture_output=True,

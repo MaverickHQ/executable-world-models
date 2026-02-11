@@ -14,6 +14,7 @@ from services.core.persistence import PolicyStore, RunStore, StateStore
 from services.core.simulator import simulate_plan
 from services.core.state import RiskLimits, State
 from services.core.strategy import evaluate_signals_with_rationale, signals_to_actions
+from services.core.transitions import apply_action
 
 
 def _format_signals(signals: Dict[str, object]) -> Dict[str, str]:
@@ -32,6 +33,19 @@ def _positions_slice(state: State, symbols: List[str]) -> Dict[str, float]:
     return {symbol: state.positions.get(symbol, 0.0) for symbol in symbols}
 
 
+def _extract_symbol_reason(step_reason: str, symbol: str) -> str:
+    token = f"{symbol}:"
+    if token not in step_reason:
+        return step_reason
+    start = step_reason.index(token)
+    remainder = step_reason[start + len(token):].lstrip()
+    parts = remainder.split(";")
+    clause = parts[0].strip()
+    if clause:
+        return f"{symbol}: {clause}"
+    return step_reason
+
+
 def _execution_rows_for_actions(
     step_index: int,
     run_id: str,
@@ -47,16 +61,20 @@ def _execution_rows_for_actions(
         return []
 
     execution_rows: List[ExecutionRow] = []
-    cash_before = prior_state.cash_balance
-    cash_after = next_state.cash_balance
+    rolling_state = prior_state
 
     for action in actions:
         side = "BUY" if isinstance(action, PlaceBuy) else "SELL"
         symbol = action.symbol
         qty = action.quantity
         price = prices.get(symbol, action.price)
-        positions_before = _positions_slice(prior_state, [symbol])
-        positions_after = _positions_slice(next_state, [symbol])
+        positions_before = _positions_slice(rolling_state, [symbol])
+        cash_before = rolling_state.cash_balance
+        transition = apply_action(rolling_state, action)
+        rolling_state = transition.next_state
+        positions_after = _positions_slice(rolling_state, [symbol])
+        cash_after = rolling_state.cash_balance
+        symbol_reason = _extract_symbol_reason(reason, symbol)
         execution_rows.append(
             ExecutionRow(
                 step_index=step_index,
@@ -70,10 +88,12 @@ def _execution_rows_for_actions(
                 cash_after=cash_after,
                 positions_before=positions_before,
                 positions_after=positions_after,
-                reason=reason,
+                reason=symbol_reason,
                 verification=verification,
             )
         )
+    if rolling_state.to_dict() != next_state.to_dict():
+        rolling_state = next_state
     return execution_rows
 
 
