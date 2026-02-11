@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.5.0 — Local Execution Loop + Ledger
+- Local loop demo that runs strategy → simulate → verify → execute.
+- Execution ledger persisted alongside tape/report artifacts.
+- Replay script for executions with deterministic table output.
+
 ## v0.4.0 — Trade Tape + Report
 - Trade tape demo loop with tape.json/csv + report.md artifacts
 - Strategy signal rationales emitted for thresholds/SMA/z-score rules

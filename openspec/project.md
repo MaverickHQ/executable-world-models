@@ -15,6 +15,9 @@ This OpenSpec defines the domain, API, infrastructure, safety controls, testing 
 - No bypass: the simulate+verify gate is always enforced.
 - Explicit interfaces: endpoints, fields, and error formats are fixed and validated.
 
+## Roadmap
+- **v0.5.0** — Local execution loop with an execution ledger and replay support.
+
 ## References
 - [AGENTS](./AGENTS.md)
 - [Specs](./specs)

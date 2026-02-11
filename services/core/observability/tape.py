@@ -161,8 +161,12 @@ def write_report_md(
         f"- Timestamp: **{timestamp}**",
         f"- Final state: `{final_state.to_dict()}`",
         "",
-        "## Replay",
+        "## Replay tape",
         f"- `python3 scripts/replay_tape.py --tape {path.with_name('tape.json')}`",
+        "",
+        "## Replay executions",
+        f"- `python3 scripts/replay_executions.py --executions "
+        f"{path.with_name('executions.json')}`",
         "",
         "## What you should see",
         "- Deterministic per-step signals and verifier decisions.",

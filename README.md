@@ -151,6 +151,21 @@ make demo-local-tape
 - A mix of HOLD/APPROVED/REJECTED decisions
 - Report and tape artifacts under `tmp/demo_local_tape/`
 
+## Local loop (strategy → simulate → verify → execute)
+
+The local loop runs the strategy across a market path, writes the trade tape,
+and persists an execution ledger.
+
+```bash
+make demo-local-loop
+python3 scripts/replay_executions.py --executions tmp/demo_local_loop/executions.json
+```
+
+**What you should see**
+- Trade tape table followed by an execution ledger table
+- Approved executions only in the ledger
+- Artifacts under `tmp/demo_local_loop/`
+
 ## Optional: Bedrock Planner (v2.1)
 
 The Bedrock planner proposes a plan only; verification remains authoritative.

@@ -27,8 +27,14 @@ demo-local-strategy:
 demo-local-tape:
 	python3 scripts/demo_local_trade_tape.py
 
+demo-local-loop:
+	python3 scripts/demo_local_loop.py
+
 demo-local-bedrock:
 	python3 scripts/demo_local_bedrock_planner.py
+
+replay-executions:
+	python3 scripts/replay_executions.py --executions tmp/demo_local_loop/executions.json
 
 cdk-install:
 	npm --prefix infra/cdk install
