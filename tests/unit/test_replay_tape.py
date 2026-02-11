@@ -23,7 +23,11 @@ def test_replay_tape_script_outputs(tmp_path) -> None:
                     "decision": "APPROVED",
                     "why": "AAPL: price < buy_below | verified OK",
                     "explanation": "Accepted",
-                    "state_delta": {"cash": {"delta": -100.0}, "exposure": {"delta": 100.0}},
+                    "state_delta": {
+                        "cash": {"delta": -100.0},
+                        "exposure": {"delta": 100.0},
+                        "positions": {"AAPL": {"delta": 1.0}},
+                    },
                     "verifier_errors": [],
                     "run_id": "run-1",
                     "artifact_dir": "/tmp/demo",
@@ -39,4 +43,5 @@ def test_replay_tape_script_outputs(tmp_path) -> None:
         check=True,
     )
     assert "step | prices | signals" in result.stdout
+    assert "positions AAPL +1.00" in result.stdout
     assert "APPROVED" in result.stdout

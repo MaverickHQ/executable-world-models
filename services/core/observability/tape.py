@@ -70,9 +70,9 @@ def _compact_delta(state_delta: Dict[str, object]) -> str:
     positions = state_delta.get("positions", {})
     position_bits = [
         f"{symbol} {values.get('delta', 0.0):+.2f}"
-        for symbol, values in positions.items()
+        for symbol, values in sorted(positions.items())
     ]
-    positions_summary = ", ".join(position_bits) if position_bits else "-"
+    positions_summary = "; ".join(position_bits) if position_bits else "-"
     return (
         f"cash {cash.get('delta', 0.0):+.2f}; "
         f"exposure {exposure.get('delta', 0.0):+.2f}; "
