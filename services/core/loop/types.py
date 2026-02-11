@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, List
 
+from services.core.broker.types import ExecutionEvent
 from services.core.observability import TapeRow
 from services.core.state import State
 
@@ -42,7 +43,26 @@ class ExecutionRow:
 
 
 @dataclass(frozen=True)
+class ExecutionBundle:
+    step_index: int
+    run_id: str
+    artifact_dir: str
+    events: List[ExecutionEvent]
+    ledger_rows: List[ExecutionRow]
+
+    def to_dict(self) -> Dict[str, object]:
+        return {
+            "step_index": self.step_index,
+            "run_id": self.run_id,
+            "artifact_dir": self.artifact_dir,
+            "events": [event.to_dict() for event in self.events],
+            "ledger_rows": [row.to_dict() for row in self.ledger_rows],
+        }
+
+
+@dataclass(frozen=True)
 class LoopResult:
     tape_rows: List[TapeRow]
     execution_rows: List[ExecutionRow]
+    execution_bundles: List[ExecutionBundle]
     final_state: State

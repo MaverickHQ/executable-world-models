@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Dict, List
 
+from services.core.broker.types import ExecutionEvent
 from services.core.loop.types import ExecutionRow
 
 
@@ -41,4 +42,30 @@ def render_execution_table(rows: List[ExecutionRow]) -> List[str]:
         "-" * 120,
     ]
     lines.extend(render_execution_row(row) for row in rows)
+    return lines
+
+
+def render_execution_event(event: ExecutionEvent) -> str:
+    return (
+        " | ".join(
+            [
+                str(event.step_index),
+                event.symbol,
+                event.side,
+                f"{event.quantity:.2f}",
+                f"{event.price:.2f}",
+                event.status,
+                event.event_id,
+                event.run_id,
+            ]
+        )
+    )
+
+
+def render_execution_events(events: List[ExecutionEvent]) -> List[str]:
+    lines = [
+        "step | symbol | side | qty | price | status | event_id | run_id",
+        "-" * 110,
+    ]
+    lines.extend(render_execution_event(event) for event in events)
     return lines

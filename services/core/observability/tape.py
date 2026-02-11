@@ -166,7 +166,7 @@ def write_report_md(
         "",
         "## Replay executions",
         f"- `python3 scripts/replay_executions.py --executions "
-        f"{path.with_name('executions.json')}`",
+        f"{path.with_name('executions.json')}` (includes execution events)",
         "",
         "## What you should see",
         "- Deterministic per-step signals and verifier decisions.",

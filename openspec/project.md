@@ -17,6 +17,7 @@ This OpenSpec defines the domain, API, infrastructure, safety controls, testing 
 
 ## Roadmap
 - **v0.5.0** — Local execution loop with an execution ledger and replay support.
+- **v0.6.0** — Local broker execution events with deterministic paper fills.
 
 ## References
 - [AGENTS](./AGENTS.md)

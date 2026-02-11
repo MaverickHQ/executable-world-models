@@ -9,7 +9,12 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from services.core.loop.formatting import render_execution_row
+from services.core.broker.types import ExecutionEvent
+from services.core.loop.formatting import (
+    render_execution_events,
+    render_execution_row,
+    render_execution_table,
+)
 
 
 def parse_args() -> argparse.Namespace:
@@ -25,14 +30,16 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def render_table(rows: list[dict]) -> None:
-    print(
-        "step | symbol | side | qty | price | cash_before | cash_after | "
-        "positions_before | positions_after | run_id | why"
-    )
-    print("-" * 120)
-    for row in rows:
-        print(render_execution_row(_row_to_execution(row)))
+def render_table(rows: list[dict], events: list[ExecutionEvent]) -> None:
+    if events:
+        print("Execution Events")
+        for line in render_execution_events(events):
+            print(line)
+        print("")
+
+    print("Execution Ledger")
+    for line in render_execution_table([_row_to_execution(row) for row in rows]):
+        print(line)
 
 
 def _row_to_execution(row: dict):
@@ -55,18 +62,50 @@ def _row_to_execution(row: dict):
     )
 
 
+def _parse_events(payload: dict) -> list[ExecutionEvent]:
+    events: list[ExecutionEvent] = []
+    for bundle in payload.get("executions", []):
+        for event in bundle.get("events", []):
+            events.append(
+                ExecutionEvent(
+                    event_id=event["event_id"],
+                    run_id=event["run_id"],
+                    step_index=event["step_index"],
+                    action_index=event["action_index"],
+                    symbol=event["symbol"],
+                    side=event["side"],
+                    quantity=event["quantity"],
+                    price=event["price"],
+                    status=event["status"],
+                )
+            )
+    return events
+
+
+def _parse_ledger_rows(payload: dict) -> list[dict]:
+    if isinstance(payload, list):
+        return payload
+    rows: list[dict] = []
+    for bundle in payload.get("executions", []):
+        rows.extend(bundle.get("ledger_rows", []))
+    return rows
+
+
 def main() -> None:
     args = parse_args()
     path = Path(args.executions)
-    rows = json.loads(path.read_text())
+    payload = json.loads(path.read_text())
+
+    rows = _parse_ledger_rows(payload)
     if args.max_rows is not None:
         rows = rows[: args.max_rows]
 
     if args.format == "json":
-        print(json.dumps(rows, indent=2))
+        print(json.dumps(payload, indent=2))
         return
 
-    render_table(rows)
+    events = _parse_events(payload) if isinstance(payload, dict) else []
+    render_table(rows, events)
 
 
 if __name__ == "__main__":

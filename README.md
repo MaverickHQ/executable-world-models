@@ -154,7 +154,7 @@ make demo-local-tape
 ## Local loop (strategy → simulate → verify → execute)
 
 The local loop runs the strategy across a market path, writes the trade tape,
-and persists an execution ledger.
+persists execution events from a local paper broker, and records an execution ledger.
 
 ```bash
 make demo-local-loop
@@ -162,7 +162,7 @@ python3 scripts/replay_executions.py --executions tmp/demo_local_loop/executions
 ```
 
 **What you should see**
-- Trade tape table followed by an execution ledger table
+- Trade tape table followed by execution events and an execution ledger
 - Approved executions only in the ledger
 - Artifacts under `tmp/demo_local_loop/`
 

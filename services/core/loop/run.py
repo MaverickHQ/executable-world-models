@@ -5,9 +5,10 @@ from typing import Dict, List
 
 from services.core.actions import PlaceBuy
 from services.core.artifacts import ArtifactWriter
+from services.core.broker import LocalPaperBroker, OrderRequest
 from services.core.deltas.compute import compute_state_delta
 from services.core.execution import execute_run
-from services.core.loop.types import ExecutionRow, LoopResult
+from services.core.loop.types import ExecutionBundle, ExecutionRow, LoopResult
 from services.core.market import MarketPath
 from services.core.observability import TapeRow
 from services.core.persistence import PolicyStore, RunStore, StateStore
@@ -92,8 +93,6 @@ def _execution_rows_for_actions(
                 verification=verification,
             )
         )
-    if rolling_state.to_dict() != next_state.to_dict():
-        rolling_state = next_state
     return execution_rows
 
 
@@ -132,6 +131,8 @@ def run_loop(
 
     tape_rows: List[TapeRow] = []
     execution_rows: List[ExecutionRow] = []
+    execution_bundles: List[ExecutionBundle] = []
+    broker = LocalPaperBroker()
 
     for step_index in range(steps):
         prices = market_path.price_context(step_index)
@@ -219,23 +220,51 @@ def run_loop(
             )
         )
 
-        execution_rows.extend(
-            _execution_rows_for_actions(
-                step_index=step_index,
-                run_id=simulation.run_id,
-                decision=decision,
-                actions=priced_actions,
-                prices=prices,
-                prior_state=state,
-                next_state=final_state,
-                reason=reason,
-                verification=verification,
-            )
+        ledger_rows = _execution_rows_for_actions(
+            step_index=step_index,
+            run_id=simulation.run_id,
+            decision=decision,
+            actions=priced_actions,
+            prices=prices,
+            prior_state=state,
+            next_state=final_state,
+            reason=reason,
+            verification=verification,
         )
+        execution_rows.extend(ledger_rows)
+
+        if decision == "APPROVED" and priced_actions:
+            orders = [
+                OrderRequest(
+                    run_id=simulation.run_id,
+                    step_index=step_index,
+                    action_index=index,
+                    symbol=action.symbol,
+                    side="BUY" if isinstance(action, PlaceBuy) else "SELL",
+                    quantity=action.quantity,
+                    limit_price=action.price,
+                )
+                for index, action in enumerate(priced_actions)
+            ]
+            events = broker.execute(orders, prices)
+            execution_bundles.append(
+                ExecutionBundle(
+                    step_index=step_index,
+                    run_id=simulation.run_id,
+                    artifact_dir=str(artifacts["decision"]).rsplit("/", 1)[0],
+                    events=events,
+                    ledger_rows=ledger_rows,
+                )
+            )
 
         if simulation.approved:
             execution = execute_run(run_store, state_store, simulation.run_id)
             if execution.state is not None:
                 state = execution.state
 
-    return LoopResult(tape_rows=tape_rows, execution_rows=execution_rows, final_state=state)
+    return LoopResult(
+        tape_rows=tape_rows,
+        execution_rows=execution_rows,
+        execution_bundles=execution_bundles,
+        final_state=state,
+    )

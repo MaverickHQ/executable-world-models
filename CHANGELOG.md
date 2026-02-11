@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.6.0 — Local Paper Broker + Execution Events
+- Local broker abstraction with deterministic execution events.
+- Executions artifacts now include broker events alongside per-trade ledger rows.
+- Demo + replay scripts print execution events before the ledger.
+
 ## v0.5.0 — Local Execution Loop + Ledger
 - Local loop demo that runs strategy → simulate → verify → execute.
 - Execution ledger persisted alongside tape/report artifacts.

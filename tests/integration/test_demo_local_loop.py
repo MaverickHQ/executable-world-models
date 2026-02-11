@@ -28,7 +28,21 @@ def test_demo_local_loop_outputs(tmp_path, monkeypatch) -> None:
     assert report_path.exists()
 
     payload = json.loads(tape_path.read_text())
-    executions = json.loads(executions_path.read_text())
+    executions_payload = json.loads(executions_path.read_text())
+    if isinstance(executions_payload, dict):
+        executions = [
+            row
+            for bundle in executions_payload.get("executions", [])
+            for row in bundle.get("ledger_rows", [])
+        ]
+        event_rows = [
+            event
+            for bundle in executions_payload.get("executions", [])
+            for event in bundle.get("events", [])
+        ]
+    else:
+        executions = executions_payload
+        event_rows = []
 
     assert payload
     assert any(row["decision"] == "APPROVED" for row in payload)
@@ -68,4 +82,6 @@ def test_demo_local_loop_outputs(tmp_path, monkeypatch) -> None:
         text=True,
         check=True,
     )
-    assert "step | symbol | side" in replay_executions.stdout
+    assert "Execution Ledger" in replay_executions.stdout
+    if event_rows:
+        assert "Execution Events" in replay_executions.stdout
