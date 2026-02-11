@@ -136,7 +136,20 @@ Available examples:
 - `examples/strategies/threshold_demo.json`
 - `examples/strategies/sma_crossover_demo.json`
 - `examples/strategies/mean_reversion_demo.json`
+
+## Trade Tape Demo (Pack 11 / v0.4)
+
+The trade tape demo runs the strategy → simulate → verify → execute loop and
+produces shareable artifacts (tape.json, tape.csv, report.md).
+
+```bash
+make demo-local-tape
 ```
+
+**What you should see**
+- Deterministic trade tape rows per step
+- A mix of HOLD/APPROVED/REJECTED decisions
+- Report and tape artifacts under `tmp/demo_local_tape/`
 
 ## Optional: Bedrock Planner (v2.1)
 

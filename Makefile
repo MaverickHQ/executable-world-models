@@ -24,6 +24,9 @@ demo-local-planner:
 demo-local-strategy:
 	python3 scripts/demo_local_strategy.py
 
+demo-local-tape:
+	python3 scripts/demo_local_trade_tape.py
+
 demo-local-bedrock:
 	python3 scripts/demo_local_bedrock_planner.py
 

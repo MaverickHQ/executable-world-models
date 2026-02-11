@@ -1,0 +1,34 @@
+import json
+import subprocess
+from pathlib import Path
+
+
+def test_demo_local_tape_outputs(tmp_path, monkeypatch) -> None:
+    repo_root = Path(__file__).resolve().parents[2]
+    monkeypatch.chdir(repo_root)
+
+    result = subprocess.run(
+        ["python3", "scripts/demo_local_trade_tape.py", "--steps", "5"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert "decision" in result.stdout
+
+    tape_path = repo_root / "tmp" / "demo_local_tape" / "tape.json"
+    report_path = repo_root / "tmp" / "demo_local_tape" / "report.md"
+    csv_path = repo_root / "tmp" / "demo_local_tape" / "tape.csv"
+
+    assert tape_path.exists()
+    assert report_path.exists()
+    assert csv_path.exists()
+
+    payload = json.loads(tape_path.read_text())
+    assert payload
+    decisions = {row["decision"] for row in payload}
+    assert decisions - {"HOLD"}
+
+    report_text = report_path.read_text()
+    assert "Trade Tape Report" in report_text
+    assert "Rejected steps" in report_text
+    assert "Approved steps" in report_text

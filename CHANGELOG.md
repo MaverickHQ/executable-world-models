@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.4.0 — Trade Tape + Report
+- Trade tape demo loop with tape.json/csv + report.md artifacts
+- Strategy signal rationales emitted for thresholds/SMA/z-score rules
+- New observability helpers for tape/report rendering
+
 ## v2.2.0 — AWS Planner Execution
 - AWS simulate handler supports planner mode for mock/optional Bedrock.
 - New AWS planner demo and smoke scripts + Makefile targets.
