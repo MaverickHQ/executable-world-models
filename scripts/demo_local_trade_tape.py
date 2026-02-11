@@ -150,9 +150,11 @@ def main() -> None:
             {"code": error.code, "message": error.message}
             for error in (simulation.steps[-1].errors if simulation.steps else [])
         ]
-        delta = simulation.steps[-1].state_delta if simulation.steps else compute_state_delta(
-            state, state, prices
-        )
+        if simulation.approved and simulation.trajectory:
+            final_state = simulation.trajectory[-1]
+            delta = compute_state_delta(state, final_state, prices)
+        else:
+            delta = compute_state_delta(state, state, prices)
         why_parts = [
             f"{symbol}: {rationale}"
             for symbol, rationale in rationales.items()

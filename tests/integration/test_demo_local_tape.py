@@ -29,6 +29,14 @@ def test_demo_local_tape_outputs(tmp_path, monkeypatch) -> None:
     decisions = {row["decision"] for row in payload}
     assert decisions - {"HOLD"}
 
+    multi_action_rows = [row for row in payload if len(row.get("actions", [])) > 1]
+    if multi_action_rows:
+        delta = multi_action_rows[0]["state_delta"]
+        positions = delta.get("positions", {})
+        assert "AAPL" in positions
+        assert "MSFT" in positions
+        assert abs(delta["cash"]["delta"]) > 0
+
     report_text = report_path.read_text()
     assert "Trade Tape Report" in report_text
     assert "Replay" in report_text
