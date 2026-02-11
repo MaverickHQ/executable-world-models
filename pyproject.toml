@@ -9,6 +9,17 @@ dependencies = [
   "ruff",
 ]
 
+[project.optional-dependencies]
+dev = [
+  "pydantic",
+  "boto3",
+  "pytest",
+  "ruff",
+]
+
+[tool.setuptools]
+packages = ["services"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"

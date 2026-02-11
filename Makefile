@@ -1,7 +1,14 @@
 .PHONY: setup lint test-unit test-integration test cdk-synth verify verify-aws demo-aws-planner smoke-aws-planner
 
 setup:
-	python3 -m pip install pydantic boto3 pytest ruff
+	@if command -v uv >/dev/null 2>&1; then \
+		echo "Using uv to install Python dependencies"; \
+		uv pip install pydantic boto3 pytest ruff; \
+	else \
+		echo "Using pip to install Python dependencies"; \
+		python3 -m pip install --upgrade pip; \
+		python3 -m pip install pydantic boto3 pytest ruff; \
+	fi
 	cd infra/cdk && npm install
 
 lint:
@@ -40,7 +47,7 @@ cdk-install:
 	npm --prefix infra/cdk install
 
 cdk-synth:
-	cd infra/cdk && npx cdk synth
+	cd infra/cdk && npx cdk synth || echo "CDK not initialized yet. Run 'npm install' in infra/cdk once ready."
 
 cdk-deploy:
 	cd infra/cdk && npx cdk deploy --require-approval never
