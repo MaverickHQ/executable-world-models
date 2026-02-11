@@ -30,5 +30,15 @@ def test_demo_local_tape_outputs(tmp_path, monkeypatch) -> None:
 
     report_text = report_path.read_text()
     assert "Trade Tape Report" in report_text
+    assert "Replay" in report_text
     assert "Rejected steps" in report_text
     assert "Approved steps" in report_text
+
+    replay = subprocess.run(
+        ["python3", "scripts/replay_tape.py", "--tape", str(tape_path)],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    assert "step | prices | signals" in replay.stdout
+    assert any(token in replay.stdout for token in ["APPROVED", "REJECTED", "HOLD"])
