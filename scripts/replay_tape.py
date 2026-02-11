@@ -44,21 +44,20 @@ def _compact_delta(state_delta: dict) -> str:
     cash = state_delta.get("cash", {})
     exposure = state_delta.get("exposure", {})
     positions = state_delta.get("positions", {})
-    parts = [
-        f"cash {cash.get('delta', 0.0):+.2f}",
-        f"exposure {exposure.get('delta', 0.0):+.2f}",
+    position_bits = [
+        f"{symbol} {values.get('delta', 0.0):+.2f}"
+        for symbol, values in positions.items()
     ]
-    if positions:
-        position_bits = [
-            f"{symbol} {values.get('delta', 0.0):+.2f}"
-            for symbol, values in positions.items()
-        ]
-        parts.append("positions " + ", ".join(position_bits))
-    return "; ".join(parts)
+    positions_summary = ", ".join(position_bits) if position_bits else "-"
+    return (
+        f"cash {cash.get('delta', 0.0):+.2f}; "
+        f"exposure {exposure.get('delta', 0.0):+.2f}; "
+        f"positions {positions_summary}"
+    )
 
 
 def render_table(rows: list[dict]) -> None:
-    print("step | prices | signals | actions | decision | why | delta | step_run_id | artifact_dir")
+    print("step | prices | signals | actions | decision | why | delta | run_id | artifact_dir")
     print("-" * 120)
     for row in rows:
         print(
@@ -71,7 +70,7 @@ def render_table(rows: list[dict]) -> None:
                     row.get("decision", ""),
                     row.get("why", ""),
                     _compact_delta(row.get("state_delta", {})),
-                    row.get("step_run_id", ""),
+                    row.get("run_id", ""),
                     row.get("artifact_dir", ""),
                 ]
             )

@@ -95,7 +95,7 @@ def main() -> None:
     rows: list[TapeRow] = []
     steps = min(args.steps, len(market_path.steps))
 
-    print("step | prices | signals | actions | decision | why | delta | run_id | artifact")
+    print("step | prices | signals | actions | decision | why | delta | run_id | artifact_dir")
     print("-" * 120)
 
     for step_index in range(steps):
@@ -126,7 +126,7 @@ def main() -> None:
                 explanation="",
                 state_delta=delta,
                 verifier_errors=[],
-                step_run_id="hold",
+                run_id="-",
                 artifact_dir=str(artifact_dir),
             )
             rows.append(row)
@@ -175,7 +175,7 @@ def main() -> None:
             explanation=explanation,
             state_delta=delta,
             verifier_errors=verifier_errors,
-            step_run_id=simulation.run_id,
+            run_id=simulation.run_id,
             artifact_dir=str(artifacts["decision"]).rsplit("/", 1)[0],
         )
         rows.append(row)

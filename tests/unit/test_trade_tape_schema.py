@@ -13,7 +13,7 @@ def test_tape_row_schema() -> None:
         explanation="Accepted",
         state_delta={},
         verifier_errors=[],
-        step_run_id="run-1",
+        run_id="run-1",
         artifact_dir="/tmp",
     )
 
@@ -29,7 +29,7 @@ def test_tape_row_schema() -> None:
         "explanation",
         "state_delta",
         "verifier_errors",
-        "step_run_id",
+        "run_id",
         "artifact_dir",
     }
 

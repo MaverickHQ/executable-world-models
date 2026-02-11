@@ -22,7 +22,7 @@ class TapeRow:
     explanation: str
     state_delta: Dict[str, object]
     verifier_errors: List[Dict[str, str]]
-    step_run_id: str
+    run_id: str
     artifact_dir: str
 
     def to_dict(self) -> Dict[str, object]:
@@ -37,7 +37,7 @@ class TapeRow:
             "explanation": self.explanation,
             "state_delta": self.state_delta,
             "verifier_errors": self.verifier_errors,
-            "step_run_id": self.step_run_id,
+            "run_id": self.run_id,
             "artifact_dir": self.artifact_dir,
         }
 
@@ -68,17 +68,16 @@ def _compact_delta(state_delta: Dict[str, object]) -> str:
     cash = state_delta.get("cash", {})
     exposure = state_delta.get("exposure", {})
     positions = state_delta.get("positions", {})
-    parts = [
-        f"cash {cash.get('delta', 0.0):+.2f}",
-        f"exposure {exposure.get('delta', 0.0):+.2f}",
+    position_bits = [
+        f"{symbol} {values.get('delta', 0.0):+.2f}"
+        for symbol, values in positions.items()
     ]
-    if positions:
-        position_bits = [
-            f"{symbol} {values.get('delta', 0.0):+.2f}"
-            for symbol, values in positions.items()
-        ]
-        parts.append("positions " + ", ".join(position_bits))
-    return "; ".join(parts)
+    positions_summary = ", ".join(position_bits) if position_bits else "-"
+    return (
+        f"cash {cash.get('delta', 0.0):+.2f}; "
+        f"exposure {exposure.get('delta', 0.0):+.2f}; "
+        f"positions {positions_summary}"
+    )
 
 
 def render_tape_row(row: TapeRow) -> str:
@@ -92,7 +91,7 @@ def render_tape_row(row: TapeRow) -> str:
                 row.decision,
                 row.why,
                 _compact_delta(row.state_delta),
-                row.step_run_id,
+                row.run_id,
                 row.artifact_dir,
             ]
         )
@@ -115,7 +114,7 @@ def write_tape_csv(path: Path, rows: List[TapeRow]) -> None:
         "explanation",
         "state_delta",
         "verifier_errors",
-        "step_run_id",
+        "run_id",
         "artifact_dir",
     ]
     with path.open("w", newline="") as handle:
@@ -135,7 +134,7 @@ def write_tape_csv(path: Path, rows: List[TapeRow]) -> None:
                     "explanation": payload["explanation"],
                     "state_delta": json.dumps(payload["state_delta"], sort_keys=True),
                     "verifier_errors": json.dumps(payload["verifier_errors"], sort_keys=True),
-                    "step_run_id": payload["step_run_id"],
+                    "run_id": payload["run_id"],
                     "artifact_dir": payload["artifact_dir"],
                 }
             )
@@ -172,7 +171,7 @@ def write_report_md(
         "",
         "## Trade Tape",
         "",
-        "| step | prices | signals | actions | decision | why | delta | run_id | artifact |",
+        "| step | prices | signals | actions | decision | why | delta | run_id | artifact_dir |",
         "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for row in rows:
@@ -187,7 +186,7 @@ def write_report_md(
                     row.decision,
                     row.why,
                     _compact_delta(row.state_delta),
-                    row.step_run_id,
+                    row.run_id,
                     row.artifact_dir,
                 ]
             )

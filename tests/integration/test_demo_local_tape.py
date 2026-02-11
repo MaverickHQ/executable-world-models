@@ -13,7 +13,8 @@ def test_demo_local_tape_outputs(tmp_path, monkeypatch) -> None:
         text=True,
         check=True,
     )
-    assert "decision" in result.stdout
+    assert "run_id" in result.stdout
+    assert "artifact_dir" in result.stdout
 
     tape_path = repo_root / "tmp" / "demo_local_tape" / "tape.json"
     report_path = repo_root / "tmp" / "demo_local_tape" / "report.md"
@@ -41,4 +42,10 @@ def test_demo_local_tape_outputs(tmp_path, monkeypatch) -> None:
         check=True,
     )
     assert "step | prices | signals" in replay.stdout
+    assert "run_id" in replay.stdout
+    assert "artifact_dir" in replay.stdout
     assert any(token in replay.stdout for token in ["APPROVED", "REJECTED", "HOLD"])
+
+    hold_rows = [line for line in result.stdout.splitlines() if " | HOLD |" in line]
+    if hold_rows:
+        assert " | - | " in hold_rows[0]

@@ -25,7 +25,7 @@ def test_replay_tape_script_outputs(tmp_path) -> None:
                     "explanation": "Accepted",
                     "state_delta": {"cash": {"delta": -100.0}, "exposure": {"delta": 100.0}},
                     "verifier_errors": [],
-                    "step_run_id": "run-1",
+                    "run_id": "run-1",
                     "artifact_dir": "/tmp/demo",
                 }
             ]
