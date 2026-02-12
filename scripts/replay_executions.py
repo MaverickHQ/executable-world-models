@@ -55,6 +55,8 @@ def _row_to_execution(row: dict):
         price=row["price"],
         cash_before=row["cash_before"],
         cash_after=row["cash_after"],
+        exposure_before=row.get("exposure_before", 0.0),
+        exposure_after=row.get("exposure_after", 0.0),
         positions_before=row.get("positions_before", {}),
         positions_after=row.get("positions_after", {}),
         reason=row.get("reason", row.get("why", "")),
@@ -77,6 +79,13 @@ def _parse_events(payload: dict) -> list[ExecutionEvent]:
                     quantity=event["quantity"],
                     price=event["price"],
                     status=event["status"],
+                    cash_before=event.get("cash_before", 0.0),
+                    cash_after=event.get("cash_after", 0.0),
+                    positions_before=event.get("positions_before", {}),
+                    positions_after=event.get("positions_after", {}),
+                    exposure_before=event.get("exposure_before", 0.0),
+                    exposure_after=event.get("exposure_after", 0.0),
+                    why=event.get("why", ""),
                 )
             )
     return events

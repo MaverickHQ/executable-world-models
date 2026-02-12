@@ -70,7 +70,7 @@ def main() -> None:
         data_dir=data_dir,
     )
 
-    print("step | prices | signals | actions | decision | why | delta | run_id | artifact_dir")
+    print("step | prices | signals | actions | decision | why | exposure | run_id | artifact_dir")
     print("-" * 120)
     for row in result.tape_rows:
         print(render_tape_row(row))

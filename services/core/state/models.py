@@ -36,6 +36,12 @@ class State:
             qty * prices.get(symbol, 0.0) for symbol, qty in self.positions.items()
         )
 
+    def exposure_value(self, prices: Dict[str, float]) -> float:
+        return sum(
+            abs(qty * prices.get(symbol, 0.0))
+            for symbol, qty in self.positions.items()
+        )
+
     def to_dict(self) -> Dict[str, object]:
         return {
             "cash_balance": self.cash_balance,

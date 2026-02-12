@@ -51,6 +51,13 @@ class ExecutionEvent:
     quantity: float
     price: float
     status: str
+    cash_before: float
+    cash_after: float
+    positions_before: Dict[str, float]
+    positions_after: Dict[str, float]
+    exposure_before: float
+    exposure_after: float
+    why: str
 
     def to_dict(self) -> Dict[str, object]:
         return {
@@ -63,4 +70,11 @@ class ExecutionEvent:
             "quantity": self.quantity,
             "price": self.price,
             "status": self.status,
+            "cash_before": self.cash_before,
+            "cash_after": self.cash_after,
+            "positions_before": dict(self.positions_before),
+            "positions_after": dict(self.positions_after),
+            "exposure_before": self.exposure_before,
+            "exposure_after": self.exposure_after,
+            "why": self.why,
         }

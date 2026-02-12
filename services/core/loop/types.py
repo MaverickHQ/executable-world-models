@@ -19,6 +19,8 @@ class ExecutionRow:
     price: float
     cash_before: float
     cash_after: float
+    exposure_before: float
+    exposure_after: float
     positions_before: Dict[str, float]
     positions_after: Dict[str, float]
     reason: str
@@ -35,6 +37,8 @@ class ExecutionRow:
             "price": self.price,
             "cash_before": self.cash_before,
             "cash_after": self.cash_after,
+            "exposure_before": self.exposure_before,
+            "exposure_after": self.exposure_after,
             "positions_before": dict(self.positions_before),
             "positions_after": dict(self.positions_after),
             "reason": self.reason,

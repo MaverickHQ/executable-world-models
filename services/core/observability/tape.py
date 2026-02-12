@@ -3,7 +3,6 @@ from __future__ import annotations
 import csv
 import json
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List
 
@@ -64,20 +63,12 @@ def _compact_actions(actions: List[Dict[str, object]]) -> str:
     return "; ".join(parts)
 
 
-def _compact_delta(state_delta: Dict[str, object]) -> str:
-    cash = state_delta.get("cash", {})
+def _format_exposure(state_delta: Dict[str, object], decision: str) -> str:
     exposure = state_delta.get("exposure", {})
-    positions = state_delta.get("positions", {})
-    position_bits = [
-        f"{symbol} {values.get('delta', 0.0):+.2f}"
-        for symbol, values in sorted(positions.items())
-    ]
-    positions_summary = "; ".join(position_bits) if position_bits else "-"
-    return (
-        f"cash {cash.get('delta', 0.0):+.2f}; "
-        f"exposure {exposure.get('delta', 0.0):+.2f}; "
-        f"positions {positions_summary}"
-    )
+    delta = exposure.get("delta", 0.0)
+    if decision in {"REJECTED", "HOLD"}:
+        delta = 0.0
+    return f"exposure {delta:+.2f}"
 
 
 def render_tape_row(row: TapeRow) -> str:
@@ -90,7 +81,7 @@ def render_tape_row(row: TapeRow) -> str:
                 _compact_actions(row.actions),
                 row.decision,
                 row.why,
-                _compact_delta(row.state_delta),
+                _format_exposure(row.state_delta, row.decision),
                 row.run_id,
                 row.artifact_dir,
             ]
@@ -148,7 +139,6 @@ def write_report_md(
     steps: int,
     final_state: State,
 ) -> None:
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%SZ")
     approved_rows = [row for row in rows if row.decision == "APPROVED"]
     rejected_rows = [row for row in rows if row.decision == "REJECTED"]
 
@@ -158,7 +148,6 @@ def write_report_md(
         f"- Strategy: **{strategy_name}**",
         f"- Fixture: **{fixture_name}**",
         f"- Steps: **{steps}**",
-        f"- Timestamp: **{timestamp}**",
         f"- Final state: `{final_state.to_dict()}`",
         "",
         "## Replay tape",
@@ -175,7 +164,7 @@ def write_report_md(
         "",
         "## Trade Tape",
         "",
-        "| step | prices | signals | actions | decision | why | delta | run_id | artifact_dir |",
+        "| step | prices | signals | actions | decision | why | exposure | run_id | artifact_dir |",
         "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for row in rows:
@@ -189,7 +178,7 @@ def write_report_md(
                     _compact_actions(row.actions),
                     row.decision,
                     row.why,
-                    _compact_delta(row.state_delta),
+                    _format_exposure(row.state_delta, row.decision),
                     row.run_id,
                     row.artifact_dir,
                 ]

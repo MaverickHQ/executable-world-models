@@ -17,6 +17,8 @@ def render_execution_row(row: ExecutionRow) -> str:
                 f"{row.price:.2f}",
                 f"{row.cash_before:.2f}",
                 f"{row.cash_after:.2f}",
+                f"{row.exposure_before:.2f}",
+                f"{row.exposure_after:.2f}",
                 _format_positions(row.positions_before),
                 _format_positions(row.positions_after),
                 row.run_id,
@@ -38,8 +40,8 @@ def _format_positions(positions: Dict[str, float]) -> str:
 def render_execution_table(rows: List[ExecutionRow]) -> List[str]:
     lines = [
         "step | symbol | side | qty | price | cash_before | cash_after | "
-        "positions_before | positions_after | run_id | why",
-        "-" * 120,
+        "exposure_before | exposure_after | positions_before | positions_after | run_id | why",
+        "-" * 150,
     ]
     lines.extend(render_execution_row(row) for row in rows)
     return lines
@@ -55,6 +57,10 @@ def render_execution_event(event: ExecutionEvent) -> str:
                 f"{event.quantity:.2f}",
                 f"{event.price:.2f}",
                 event.status,
+                f"{event.cash_before:.2f}",
+                f"{event.cash_after:.2f}",
+                f"{event.exposure_before:.2f}",
+                f"{event.exposure_after:.2f}",
                 event.event_id,
                 event.run_id,
             ]
@@ -64,8 +70,9 @@ def render_execution_event(event: ExecutionEvent) -> str:
 
 def render_execution_events(events: List[ExecutionEvent]) -> List[str]:
     lines = [
-        "step | symbol | side | qty | price | status | event_id | run_id",
-        "-" * 110,
+        "step | symbol | side | qty | price | status | cash_before | cash_after | "
+        "exposure_before | exposure_after | event_id | run_id",
+        "-" * 160,
     ]
     lines.extend(render_execution_event(event) for event in events)
     return lines

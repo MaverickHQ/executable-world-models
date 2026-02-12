@@ -16,6 +16,8 @@ def test_execution_row_formatting() -> None:
         price=100.0,
         cash_before=1_000.0,
         cash_after=900.0,
+        exposure_before=0.0,
+        exposure_after=100.0,
         positions_before={"AAPL": 0.0},
         positions_after={"AAPL": 1.0},
         reason="AAPL: price < buy_below",
@@ -26,6 +28,8 @@ def test_execution_row_formatting() -> None:
     assert "1 | AAPL | BUY" in rendered
     assert "1000.00" in rendered
     assert "900.00" in rendered
+    assert "0.00" in rendered
+    assert "100.00" in rendered
     assert "AAPL 0.00" in rendered
     assert "AAPL 1.00" in rendered
 
@@ -65,6 +69,10 @@ def test_execution_rows_are_sequential() -> None:
     assert rows[0].cash_after == 900.0
     assert rows[1].cash_before == 900.0
     assert rows[1].cash_after == 700.0
+    assert rows[0].exposure_before == 0.0
+    assert rows[0].exposure_after == 100.0
+    assert rows[1].exposure_before == 100.0
+    assert rows[1].exposure_after == 300.0
     assert rows[0].positions_before == {"AAPL": 0.0}
     assert rows[0].positions_after == {"AAPL": 1.0}
     assert rows[1].positions_before == {"MSFT": 0.0}

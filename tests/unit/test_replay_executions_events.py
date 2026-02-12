@@ -20,6 +20,13 @@ def test_replay_executions_includes_events(tmp_path) -> None:
                         "quantity": 1.0,
                         "price": 100.0,
                         "status": "FILLED",
+                        "cash_before": 1000.0,
+                        "cash_after": 900.0,
+                        "positions_before": {"AAPL": 0.0},
+                        "positions_after": {"AAPL": 1.0},
+                        "exposure_before": 0.0,
+                        "exposure_after": 100.0,
+                        "why": "paper fill",
                     }
                 ],
                 "ledger_rows": [
@@ -33,6 +40,8 @@ def test_replay_executions_includes_events(tmp_path) -> None:
                         "price": 100.0,
                         "cash_before": 1000.0,
                         "cash_after": 900.0,
+                        "exposure_before": 0.0,
+                        "exposure_after": 100.0,
                         "positions_before": {"AAPL": 0.0},
                         "positions_after": {"AAPL": 1.0},
                         "reason": "AAPL: test",

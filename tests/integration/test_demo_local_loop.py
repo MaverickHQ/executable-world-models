@@ -17,6 +17,7 @@ def test_demo_local_loop_outputs(tmp_path, monkeypatch) -> None:
     assert "Execution Ledger" in result.stdout
     assert "step | prices | signals" in result.stdout
     assert "step | symbol | side" in result.stdout
+    assert "exposure" in result.stdout
 
     data_dir = repo_root / "tmp" / "demo_local_loop"
     tape_path = data_dir / "tape.json"
@@ -58,6 +59,8 @@ def test_demo_local_loop_outputs(tmp_path, monkeypatch) -> None:
         step_rows = [row for row in executions if row["step_index"] == step_index]
         assert len(step_rows) > 1
         assert step_rows[1]["cash_before"] == step_rows[0]["cash_after"]
+        assert step_rows[1]["exposure_before"] == step_rows[0]["exposure_after"]
+        assert step_rows[1]["exposure_after"] > step_rows[0]["exposure_after"]
         for row in step_rows:
             symbol = row["symbol"]
             if f"{symbol}:" in row["reason"]:
@@ -70,6 +73,7 @@ def test_demo_local_loop_outputs(tmp_path, monkeypatch) -> None:
         check=True,
     )
     assert "step | prices | signals" in replay_tape.stdout
+    assert "exposure" in replay_tape.stdout
 
     replay_executions = subprocess.run(
         [
@@ -83,5 +87,6 @@ def test_demo_local_loop_outputs(tmp_path, monkeypatch) -> None:
         check=True,
     )
     assert "Execution Ledger" in replay_executions.stdout
+    assert "exposure" in replay_executions.stdout
     if event_rows:
         assert "Execution Events" in replay_executions.stdout

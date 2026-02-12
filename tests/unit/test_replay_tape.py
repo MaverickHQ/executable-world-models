@@ -43,5 +43,5 @@ def test_replay_tape_script_outputs(tmp_path) -> None:
         check=True,
     )
     assert "step | prices | signals" in result.stdout
-    assert "positions AAPL +1.00" in result.stdout
+    assert "exposure +100.00" in result.stdout
     assert "APPROVED" in result.stdout

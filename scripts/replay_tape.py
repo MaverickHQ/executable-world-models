@@ -40,24 +40,16 @@ def _compact_actions(actions: list[dict]) -> str:
     return "; ".join(parts)
 
 
-def _compact_delta(state_delta: dict) -> str:
-    cash = state_delta.get("cash", {})
+def _format_exposure(state_delta: dict, decision: str) -> str:
     exposure = state_delta.get("exposure", {})
-    positions = state_delta.get("positions", {})
-    position_bits = [
-        f"{symbol} {values.get('delta', 0.0):+.2f}"
-        for symbol, values in sorted(positions.items())
-    ]
-    positions_summary = "; ".join(position_bits) if position_bits else "-"
-    return (
-        f"cash {cash.get('delta', 0.0):+.2f}; "
-        f"exposure {exposure.get('delta', 0.0):+.2f}; "
-        f"positions {positions_summary}"
-    )
+    delta = exposure.get("delta", 0.0)
+    if decision in {"REJECTED", "HOLD"}:
+        delta = 0.0
+    return f"exposure {delta:+.2f}"
 
 
 def render_table(rows: list[dict]) -> None:
-    print("step | prices | signals | actions | decision | why | delta | run_id | artifact_dir")
+    print("step | prices | signals | actions | decision | why | exposure | run_id | artifact_dir")
     print("-" * 120)
     for row in rows:
         print(
@@ -69,7 +61,7 @@ def render_table(rows: list[dict]) -> None:
                     _compact_actions(row.get("actions", [])),
                     row.get("decision", ""),
                     row.get("why", ""),
-                    _compact_delta(row.get("state_delta", {})),
+                    _format_exposure(row.get("state_delta", {}), row.get("decision", "")),
                     row.get("run_id", ""),
                     row.get("artifact_dir", ""),
                 ]

@@ -71,10 +71,12 @@ def _execution_rows_for_actions(
         price = prices.get(symbol, action.price)
         positions_before = _positions_slice(rolling_state, [symbol])
         cash_before = rolling_state.cash_balance
+        exposure_before = rolling_state.exposure_value(prices)
         transition = apply_action(rolling_state, action)
         rolling_state = transition.next_state
         positions_after = _positions_slice(rolling_state, [symbol])
         cash_after = rolling_state.cash_balance
+        exposure_after = rolling_state.exposure_value(prices)
         symbol_reason = _extract_symbol_reason(reason, symbol)
         execution_rows.append(
             ExecutionRow(
@@ -87,6 +89,8 @@ def _execution_rows_for_actions(
                 price=price,
                 cash_before=cash_before,
                 cash_after=cash_after,
+                exposure_before=exposure_before,
+                exposure_after=exposure_after,
                 positions_before=positions_before,
                 positions_after=positions_after,
                 reason=symbol_reason,
@@ -246,7 +250,7 @@ def run_loop(
                 )
                 for index, action in enumerate(priced_actions)
             ]
-            events = broker.execute(orders, prices)
+            events = broker.execute(orders, prices, starting_state=state)
             execution_bundles.append(
                 ExecutionBundle(
                     step_index=step_index,

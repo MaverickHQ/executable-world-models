@@ -36,11 +36,7 @@ def test_demo_local_tape_outputs(tmp_path, monkeypatch) -> None:
         assert "AAPL" in positions
         assert "MSFT" in positions
         assert abs(delta["cash"]["delta"]) > 0
-        output_lines = result.stdout.splitlines()
-        multi_action_line = next(
-            line for line in output_lines if "AAPL +1.00" in line and "MSFT +1.00" in line
-        )
-        assert "AAPL +1.00; MSFT +1.00" in multi_action_line
+        assert "exposure" in result.stdout
 
     report_text = report_path.read_text()
     assert "Trade Tape Report" in report_text
