@@ -92,6 +92,10 @@ Essays 1–4 are the foundations that explain *why* this architecture exists: Es
 
 ## Setup
 
+This repo is **local-first**. You can run setup/lint/tests without AWS credentials.
+AWS/CDK actions are optional and should be run explicitly when you're ready.
+`cdk-deploy` is not part of the baseline workflow.
+
 ```bash
 make setup
 ```
@@ -217,6 +221,14 @@ AWS_PROFILE=beyond-tokens-dev make smoke-aws-planner
 make lint
 make test
 make demo-local
+```
+
+## 10-minute evaluation (baseline)
+```bash
+make setup
+make lint
+make test
+make cdk-synth
 ```
 
 ## How to evaluate this repository in 10 minutes

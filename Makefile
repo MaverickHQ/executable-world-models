@@ -5,7 +5,7 @@ setup:
 		echo "Using uv to install Python dependencies"; \
 		uv pip install pydantic boto3 pytest ruff; \
 	else \
-		echo "Using pip to install Python dependencies"; \
+		echo "uv not found; using pip to install Python dependencies"; \
 		python3 -m pip install --upgrade pip; \
 		python3 -m pip install pydantic boto3 pytest ruff; \
 	fi
@@ -47,7 +47,13 @@ cdk-install:
 	npm --prefix infra/cdk install
 
 cdk-synth:
-	cd infra/cdk && npx cdk synth || echo "CDK not initialized yet. Run 'npm install' in infra/cdk once ready."
+	@cd infra/cdk && \
+	if [ -x node_modules/.bin/cdk ]; then \
+		./node_modules/.bin/cdk synth; \
+	else \
+		echo "CDK not initialized yet. Run 'npm install' in infra/cdk once ready."; \
+		exit 1; \
+	fi
 
 cdk-deploy:
 	cd infra/cdk && npx cdk deploy --require-approval never
