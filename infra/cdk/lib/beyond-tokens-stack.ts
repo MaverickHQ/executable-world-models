@@ -4,6 +4,8 @@ import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
+import * as apigwv2Integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import * as path from "path";
 
 export class BeyondTokensStack extends cdk.Stack {
@@ -87,9 +89,34 @@ export class BeyondTokensStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(30),
     });
 
+    const agentcoreHelloFn = new lambda.Function(this, "AgentCoreHelloFn", {
+      runtime: lambda.Runtime.PYTHON_3_11,
+      handler: "services.aws.handlers.agentcore_hello_handler.handler",
+      code: lambdaAsset,
+      environment: {
+        ARTIFACT_BUCKET: artifactsBucket.bucketName,
+      },
+      timeout: cdk.Duration.seconds(10),
+      reservedConcurrentExecutions: 2,
+    });
+
+    const agentcoreHelloApi = new apigwv2.HttpApi(this, "AgentCoreHelloApi", {
+      apiName: "agentcore-hello",
+    });
+
+    agentcoreHelloApi.addRoutes({
+      path: "/hello",
+      methods: [apigwv2.HttpMethod.POST],
+      integration: new apigwv2Integrations.HttpLambdaIntegration(
+        "AgentCoreHelloIntegration",
+        agentcoreHelloFn,
+      ),
+    });
+
     artifactsBucket.grantReadWrite(simulateFn);
     artifactsBucket.grantReadWrite(statusFn);
     artifactsBucket.grantReadWrite(executeFn);
+    artifactsBucket.grantReadWrite(agentcoreHelloFn);
 
     stateTable.grantReadWriteData(simulateFn);
     stateTable.grantReadWriteData(executeFn);
@@ -129,6 +156,12 @@ export class BeyondTokensStack extends cdk.Stack {
     });
     new cdk.CfnOutput(this, "StatusFunctionName", {
       value: statusFn.functionName,
+    });
+    new cdk.CfnOutput(this, "AgentCoreHelloFunctionName", {
+      value: agentcoreHelloFn.functionName,
+    });
+    new cdk.CfnOutput(this, "AgentCoreHelloApiUrl", {
+      value: agentcoreHelloApi.apiEndpoint,
     });
   }
 }

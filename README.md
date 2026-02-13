@@ -211,6 +211,28 @@ AWS_PROFILE=beyond-tokens-dev make smoke-aws-planner
 - Each scenario prints a non-empty explanation line.
 - Artifact prefixes are printed (no AWS identifiers).
 
+## AWS AgentCore Hello (v0.7)
+
+Cost-safe hello path that writes minimal artifacts, with **no model calls and no memory**.
+
+```bash
+AWS_PROFILE=beyond-tokens-dev AWS_REGION=us-east-1 make deploy-agentcore-hello
+AWS_PROFILE=beyond-tokens-dev AWS_REGION=us-east-1 make smoke-agentcore-hello
+AWS_PROFILE=beyond-tokens-dev AWS_REGION=us-east-1 make demo-agentcore-hello
+```
+
+**What you should see** (sanitized)
+```json
+{
+  "ok": true,
+  "run_id": "<uuid>",
+  "mode": "agentcore-hello",
+  "message": "hello from agentcore (no model calls)",
+  "artifacts": {"artifact_dir": "s3://<redacted>/artifacts/<run_id>/"},
+  "budgets": {"max_steps": 1, "max_tool_calls": 0, "max_model_calls": 0, "max_memory_ops": 0}
+}
+```
+
 ## What you should see
 - Scenario A rejects with clear verification errors.
 - Scenario B approves and executes with updated state.

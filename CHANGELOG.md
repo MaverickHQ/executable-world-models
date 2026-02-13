@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.7.0 — AgentCore Hello (Cost-safe)
+- Added AgentCore hello handler + gateway endpoint (no model calls, no memory).
+- Minimal artifacts written to S3 (decision.json + report.md).
+- New Make targets and smoke/demo script for hello path.
+
 ## v0.6.0 — Local Paper Broker + Execution Events
 - Local broker abstraction with deterministic execution events.
 - Executions artifacts now include broker events alongside per-trade ledger rows.
