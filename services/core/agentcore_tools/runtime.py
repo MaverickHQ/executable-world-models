@@ -41,6 +41,12 @@ def run_tool_loop(
             )
             break
 
+        if budget_state.memory_bytes > budget.max_memory_bytes:
+            results.append(
+                ToolResult(ok=False, error="budget exceeded: max_memory_bytes")
+            )
+            break
+
         result = registry.invoke(request)
         results.append(result)
         if not result.ok:

@@ -1,4 +1,4 @@
-.PHONY: setup lint test-unit test-integration test cdk-synth verify verify-aws demo-aws-planner smoke-aws-planner demo-agentcore-base smoke-agentcore-base deploy-agentcore-base deploy-agentcore-tools smoke-agentcore-tools demo-agentcore-tools
+.PHONY: setup lint test-unit test-integration test cdk-synth verify verify-aws demo-aws-planner smoke-aws-planner demo-agentcore-base smoke-agentcore-base deploy-agentcore-base deploy-agentcore-tools smoke-agentcore-tools demo-agentcore-tools deploy-agentcore-memory smoke-agentcore-memory demo-agentcore-memory verify-agentcore-memory
 
 setup:
 	@if command -v uv >/dev/null 2>&1; then \
@@ -89,6 +89,20 @@ smoke-agentcore-tools:
 demo-agentcore-tools:
 	python3 scripts/demo_agentcore_tools.py
 
+deploy-agentcore-memory:
+	cd infra/cdk && npx cdk deploy --require-approval never
+
+smoke-agentcore-memory:
+	python3 scripts/smoke_agentcore_memory.py
+
+demo-agentcore-memory:
+	python3 scripts/demo_agentcore_memory.py
+
+verify-agentcore-memory: lint test
+	@if [ "$$RUN_AWS_TESTS" = "1" ]; then \
+		$(MAKE) smoke-agentcore-memory; \
+	fi
+
 verify: lint test demo-local
 
 verify-aws:
@@ -108,3 +122,6 @@ verify-aws:
 	$(MAKE) deploy-agentcore-tools
 	$(MAKE) smoke-agentcore-tools
 	$(MAKE) demo-agentcore-tools
+	$(MAKE) deploy-agentcore-memory
+	$(MAKE) smoke-agentcore-memory
+	$(MAKE) demo-agentcore-memory

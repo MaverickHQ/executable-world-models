@@ -25,6 +25,7 @@ Local:
 AWS (AgentCore):
 - Lambda handler (AgentCore Base)
 - Lambda handler (AgentCore Tools)
+- Lambda handler (AgentCore Memory)
 - HTTP API Gateway
 - S3 artifact storage
 - Budget enforcement circuit breakers
@@ -40,7 +41,8 @@ Every AgentCore invocation includes explicit budget fields:
   "max_steps": 1,
   "max_tool_calls": 0,
   "max_model_calls": 0,
-  "max_memory_ops": 0
+  "max_memory_ops": 0,
+  "max_memory_bytes": 0
 }
 
 If any budget is exceeded:
@@ -101,7 +103,41 @@ AWS_PROFILE=beyond-tokens-dev AWS_REGION=us-east-1 make demo-agentcore-tools
 
 ---
 
+## AgentCore Memory (optional, cost-safe)
+
+Enable memory explicitly before smoke/demo runs:
+
+ENABLE_AGENTCORE_MEMORY=1
+MEMORY_MAX_OPS=1
+MEMORY_MAX_BYTES=512
+
+Deploy:
+AWS_PROFILE=beyond-tokens-dev AWS_REGION=us-east-1 make deploy-agentcore-memory
+
+Smoke test:
+AWS_PROFILE=beyond-tokens-dev AWS_REGION=us-east-1 make smoke-agentcore-memory
+
+Run demo:
+AWS_PROFILE=beyond-tokens-dev AWS_REGION=us-east-1 make demo-agentcore-memory
+
+Budgets:
+
+| Budget | Meaning |
+| --- | --- |
+| max_memory_ops | Maximum memory put/get operations |
+| max_memory_bytes | Maximum serialized bytes across memory ops |
+
+If you hit a threshold:
+1) Increase the specific memory budget (MEMORY_MAX_OPS / MEMORY_MAX_BYTES) only as needed.
+2) Re-deploy and re-run the smoke test.
+3) Confirm no runaway calls by keeping max_steps=1 and max_tool_calls=0.
+
+To clean up artifacts if needed, remove the run prefix from the artifacts bucket.
+
+---
+
 ## Versioning
 
 v0.7.0-base  → AgentCore baseline (no model calls)
 v0.7.1-tools → Tool calling + budget enforcement + README rewrite
+v0.7.2-memory → Optional memory path (budgeted, no model calls)

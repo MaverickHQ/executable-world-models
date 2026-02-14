@@ -253,6 +253,7 @@ def handler(event, context):
         max_tool_calls=int(budget_payload.get("max_tool_calls", 5)),
         max_model_calls=int(budget_payload.get("max_model_calls", 0)),
         max_memory_ops=int(budget_payload.get("max_memory_ops", 0)),
+        max_memory_bytes=int(budget_payload.get("max_memory_bytes", 0)),
     )
 
     tool_plan_payload = payload.get("tool_plan")

@@ -123,6 +123,18 @@ export class BeyondTokensStack extends cdk.Stack {
       layers: [pythonDepsLayer],
     });
 
+    const agentcoreMemoryFn = new lambda.Function(this, "AgentCoreMemoryFn", {
+      runtime: lambda.Runtime.PYTHON_3_11,
+      handler: "services.aws.handlers.agentcore_memory_handler.handler",
+      code: lambdaAsset,
+      environment: {
+        ARTIFACT_BUCKET: artifactsBucket.bucketName,
+      },
+      timeout: cdk.Duration.seconds(15),
+      reservedConcurrentExecutions: 1,
+      layers: [pythonDepsLayer],
+    });
+
     const agentcoreHelloApi = new apigwv2.HttpApi(this, "AgentCoreHelloApi", {
       apiName: "agentcore-hello",
     });
@@ -145,11 +157,21 @@ export class BeyondTokensStack extends cdk.Stack {
       ),
     });
 
+    agentcoreHelloApi.addRoutes({
+      path: "/agentcore/memory",
+      methods: [apigwv2.HttpMethod.POST],
+      integration: new apigwv2Integrations.HttpLambdaIntegration(
+        "AgentCoreMemoryIntegration",
+        agentcoreMemoryFn,
+      ),
+    });
+
     artifactsBucket.grantReadWrite(simulateFn);
     artifactsBucket.grantReadWrite(statusFn);
     artifactsBucket.grantReadWrite(executeFn);
     artifactsBucket.grantReadWrite(agentcoreHelloFn);
     artifactsBucket.grantReadWrite(agentcoreToolsFn);
+    artifactsBucket.grantReadWrite(agentcoreMemoryFn);
 
     stateTable.grantReadWriteData(simulateFn);
     stateTable.grantReadWriteData(executeFn);
@@ -200,6 +222,12 @@ export class BeyondTokensStack extends cdk.Stack {
       value: agentcoreToolsFn.functionName,
     });
     new cdk.CfnOutput(this, "AgentCoreToolsApiUrl", {
+      value: agentcoreHelloApi.apiEndpoint,
+    });
+    new cdk.CfnOutput(this, "AgentCoreMemoryFunctionName", {
+      value: agentcoreMemoryFn.functionName,
+    });
+    new cdk.CfnOutput(this, "AgentCoreMemoryApiUrl", {
       value: agentcoreHelloApi.apiEndpoint,
     });
   }
