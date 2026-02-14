@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Protocol
 
@@ -71,6 +72,49 @@ class BedrockAgentCoreMemoryStore:
         raise MemoryStoreError(
             "AgentCore memory integration not configured", code="memory_unavailable"
         )
+
+
+@dataclass
+class DynamoDBMemoryStore:
+    table_name: str
+    ttl_seconds: int = 86_400
+    client: Any = None
+
+    def __post_init__(self) -> None:
+        self._client = self.client or boto3.client("dynamodb")
+        if not self.table_name:
+            raise MemoryStoreError("AGENTCORE_MEMORY_TABLE is required", code="memory_unavailable")
+
+    def _item_key(self, key: str) -> Dict[str, Dict[str, str]]:
+        return {
+            "pk": {"S": "memory"},
+            "sk": {"S": key},
+        }
+
+    def put(self, key: str, value: Dict[str, Any]) -> None:
+        expires_at = str(int(time.time()) + int(self.ttl_seconds))
+        self._client.put_item(
+            TableName=self.table_name,
+            Item={
+                **self._item_key(key),
+                "value": {"S": json.dumps(value, sort_keys=True)},
+                "expires_at": {"N": expires_at},
+            },
+        )
+
+    def get(self, key: str) -> Optional[Dict[str, Any]]:
+        response = self._client.get_item(
+            TableName=self.table_name,
+            Key=self._item_key(key),
+            ConsistentRead=True,
+        )
+        item = response.get("Item")
+        if not item:
+            return None
+        raw_value = item.get("value", {}).get("S")
+        if not raw_value:
+            return None
+        return json.loads(raw_value)
 
 
 def estimate_memory_bytes(payload: Dict[str, Any]) -> int:

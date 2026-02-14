@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import json
 import os
-import ssl
 import sys
 from pathlib import Path
 
 import boto3
-import urllib.error
-import urllib.request
+import certifi
+import requests
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -30,29 +29,21 @@ def _sanitize(payload: dict) -> dict:
 
 def _invoke_api(api_url: str, body: dict) -> dict:
     url = api_url.rstrip("/") + "/agentcore/memory"
-    request = urllib.request.Request(
+    response = requests.post(
         url,
-        data=json.dumps(body).encode("utf-8"),
+        json=body,
         headers={"content-type": "application/json"},
-        method="POST",
+        timeout=10,
+        verify=_ca_bundle_path(),
     )
-    context = ssl.create_default_context()
-    if os.environ.get("ALLOW_INSECURE_HTTPS") == "1":
-        context = ssl._create_unverified_context()
-    try:
-        with urllib.request.urlopen(request, timeout=10, context=context) as response:
-            return json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        payload = exc.read().decode("utf-8")
-        if payload:
-            try:
-                parsed = json.loads(payload)
-                if isinstance(parsed, dict) and "body" in parsed:
-                    return json.loads(parsed["body"]) if isinstance(parsed["body"], str) else parsed["body"]
-                return parsed
-            except json.JSONDecodeError:
-                pass
-        raise
+    parsed = response.json()
+    if isinstance(parsed, dict) and "body" in parsed:
+        return json.loads(parsed["body"]) if isinstance(parsed["body"], str) else parsed["body"]
+    return parsed
+
+
+def _ca_bundle_path() -> str:
+    return os.environ.get("REQUESTS_CA_BUNDLE") or certifi.where()
 
 
 def _invoke_lambda(function_name: str, body: dict) -> dict:
@@ -85,7 +76,7 @@ def _run(api_url: str | None, function_name: str | None, body: dict) -> dict:
     if api_url:
         try:
             return _invoke_api(api_url, body)
-        except Exception as exc:
+        except requests.RequestException as exc:
             if os.environ.get("ALLOW_LAMBDA_FALLBACK") == "1" and function_name:
                 print(f"API invoke failed; falling back to lambda invoke: {exc}")
                 return _invoke_lambda(function_name, body)
@@ -108,6 +99,7 @@ def main() -> None:
         print(f"Target API: {api_url.rstrip('/')}/agentcore/memory")
     elif function_name:
         print(f"Target Lambda fallback: {function_name}")
+    print(f"TLS CA bundle: {_ca_bundle_path()}")
 
     os.environ.setdefault("ENABLE_AGENTCORE_MEMORY", "1")
 
@@ -134,6 +126,10 @@ def main() -> None:
     get_payload = _run(api_url, function_name, get_body)
     if not get_payload.get("ok"):
         raise SystemExit("memory_get did not return ok=true")
+    get_ops = get_payload.get("memory", {}).get("ops", [])
+    got_value = get_ops[0].get("value") if get_ops else None
+    if got_value != {"value": "hello"}:
+        raise SystemExit("memory_get expected persisted value from previous memory_put")
 
     fail_payload = _run(api_url, function_name, fail_body)
     if fail_payload.get("ok"):

@@ -3,11 +3,11 @@
 setup:
 	@if command -v uv >/dev/null 2>&1; then \
 		echo "Using uv to install Python dependencies"; \
-		uv pip install pydantic boto3 pytest ruff; \
+		uv pip install pydantic boto3 requests certifi pytest ruff; \
 	else \
 		echo "uv not found; using pip to install Python dependencies"; \
 		python3 -m pip install --upgrade pip; \
-		python3 -m pip install pydantic boto3 pytest ruff; \
+		python3 -m pip install pydantic boto3 requests certifi pytest ruff; \
 	fi
 	cd infra/cdk && npm install
 

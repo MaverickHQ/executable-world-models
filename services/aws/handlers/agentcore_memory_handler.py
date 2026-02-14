@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from services.core.agentcore_memory import (
     BedrockAgentCoreMemoryStore,
+    DynamoDBMemoryStore,
     InMemoryMemoryStore,
     MemoryStore,
     MemoryStoreError,
@@ -165,6 +166,17 @@ def _resolve_store() -> Tuple[MemoryStore, str, bool, bool, Optional[str]]:
         return NoOpMemoryStore(), "disabled", False, True, None
     store_kind = os.environ.get("AGENTCORE_MEMORY_BACKEND", "in-memory")
     try:
+        if store_kind == "dynamodb":
+            return (
+                DynamoDBMemoryStore(
+                    table_name=os.environ.get("AGENTCORE_MEMORY_TABLE", ""),
+                    ttl_seconds=int(os.environ.get("AGENTCORE_MEMORY_TTL_SECONDS", "86400")),
+                ),
+                "dynamodb",
+                True,
+                True,
+                None,
+            )
         if store_kind == "agentcore":
             return BedrockAgentCoreMemoryStore(), "agentcore", True, True, None
         return InMemoryMemoryStore(storage={}), "in-memory", True, True, None
@@ -269,20 +281,7 @@ def handler(event, context):
     budget = _build_budget(payload)
     state = BudgetState()
     requests = payload.requests or _default_requests(run_id)
-    store, store_kind, memory_enabled, store_init_ok, store_init_error = _resolve_store()
-
-    print(
-        "agentcore_memory config "
-        + json.dumps(
-            {
-                "memory_enabled": memory_enabled,
-                "memory_backend": store_kind,
-                "store_init_ok": store_init_ok,
-                "budget": budget.model_dump(),
-            },
-            sort_keys=True,
-        )
-    )
+    memory_enabled = os.environ.get("ENABLE_AGENTCORE_MEMORY") == "1"
 
     precheck_error = _precheck_budget(requests, budget) if memory_enabled else None
     if precheck_error:
@@ -303,6 +302,21 @@ def handler(event, context):
                 "body": json.dumps(response_payload),
             }
         return response_payload
+
+    store, store_kind, memory_enabled, store_init_ok, store_init_error = _resolve_store()
+
+    print(
+        "agentcore_memory config "
+        + json.dumps(
+            {
+                "memory_enabled": memory_enabled,
+                "memory_backend": store_kind,
+                "store_init_ok": store_init_ok,
+                "budget": budget.model_dump(),
+            },
+            sort_keys=True,
+        )
+    )
 
     if store_kind == "disabled":
         decision_payload = {

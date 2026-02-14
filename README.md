@@ -61,6 +61,11 @@ If you hit a threshold:
 2) Redeploy
 3) Re-test
 
+If you receive a `budget_exceeded` response:
+- Inspect `error.limiter` to identify the exact breaker that tripped.
+- Inspect `error.budgets.budget` vs `error.budgets.budget_state`.
+- Increase only the required budget dimension; keep other breakers strict.
+
 Do NOT remove guardrails.
 
 ---
@@ -131,6 +136,19 @@ If you hit a threshold:
 1) Increase the specific memory budget (MEMORY_MAX_OPS / MEMORY_MAX_BYTES) only as needed.
 2) Re-deploy and re-run the smoke test.
 3) Confirm no runaway calls by keeping max_steps=1 and max_tool_calls=0.
+
+### HTTPS CA bundle troubleshooting
+
+Memory smoke/demo scripts always verify TLS.
+They use `REQUESTS_CA_BUNDLE` when provided, otherwise they use `certifi`.
+
+If your machine has certificate issues, export:
+
+```bash
+export REQUESTS_CA_BUNDLE="$(python3 -c 'import certifi; print(certifi.where())')"
+```
+
+Then re-run smoke/demo.
 
 To clean up artifacts if needed, remove the run prefix from the artifacts bucket.
 

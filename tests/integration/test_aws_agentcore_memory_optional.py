@@ -17,3 +17,4 @@ def test_agentcore_memory_smoke():
         text=True,
     )
     assert "\"ok\": true" in result.stdout.lower()
+    assert "\"value\": \"hello\"" in result.stdout.lower()
