@@ -65,12 +65,19 @@ export class BeyondTokensStack extends cdk.Stack {
       ],
     });
 
+    const pythonDepsLayer = new lambda.LayerVersion(this, "PythonDepsLayer", {
+      code: lambda.Code.fromAsset(path.join(lambdaPath, "infra", "cdk", "layers", "python-deps")),
+      compatibleRuntimes: [lambda.Runtime.PYTHON_3_11],
+      description: "Python dependencies for Beyond Tokens lambdas",
+    });
+
     const simulateFn = new lambda.Function(this, "SimulateFn", {
       runtime: lambda.Runtime.PYTHON_3_11,
       handler: "services.aws.handlers.simulate_handler.handler",
       code: lambdaAsset,
       environment: lambdaEnv,
       timeout: cdk.Duration.seconds(30),
+      layers: [pythonDepsLayer],
     });
 
     const executeFn = new lambda.Function(this, "ExecuteFn", {
@@ -79,6 +86,7 @@ export class BeyondTokensStack extends cdk.Stack {
       code: lambdaAsset,
       environment: lambdaEnv,
       timeout: cdk.Duration.seconds(30),
+      layers: [pythonDepsLayer],
     });
 
     const statusFn = new lambda.Function(this, "StatusFn", {
@@ -87,6 +95,7 @@ export class BeyondTokensStack extends cdk.Stack {
       code: lambdaAsset,
       environment: lambdaEnv,
       timeout: cdk.Duration.seconds(30),
+      layers: [pythonDepsLayer],
     });
 
     const agentcoreHelloFn = new lambda.Function(this, "AgentCoreHelloFn", {
@@ -98,6 +107,20 @@ export class BeyondTokensStack extends cdk.Stack {
       },
       timeout: cdk.Duration.seconds(10),
       reservedConcurrentExecutions: 2,
+      layers: [pythonDepsLayer],
+    });
+
+    const agentcoreToolsFn = new lambda.Function(this, "AgentCoreToolsFn", {
+      runtime: lambda.Runtime.PYTHON_3_11,
+      handler: "services.aws.handlers.agentcore_tools_handler.handler",
+      code: lambdaAsset,
+      environment: {
+        ARTIFACT_BUCKET: artifactsBucket.bucketName,
+        FIXTURE_NAME: "trading_path.json",
+      },
+      timeout: cdk.Duration.seconds(30),
+      reservedConcurrentExecutions: 2,
+      layers: [pythonDepsLayer],
     });
 
     const agentcoreHelloApi = new apigwv2.HttpApi(this, "AgentCoreHelloApi", {
@@ -113,10 +136,20 @@ export class BeyondTokensStack extends cdk.Stack {
       ),
     });
 
+    agentcoreHelloApi.addRoutes({
+      path: "/agentcore/tools",
+      methods: [apigwv2.HttpMethod.POST],
+      integration: new apigwv2Integrations.HttpLambdaIntegration(
+        "AgentCoreToolsIntegration",
+        agentcoreToolsFn,
+      ),
+    });
+
     artifactsBucket.grantReadWrite(simulateFn);
     artifactsBucket.grantReadWrite(statusFn);
     artifactsBucket.grantReadWrite(executeFn);
     artifactsBucket.grantReadWrite(agentcoreHelloFn);
+    artifactsBucket.grantReadWrite(agentcoreToolsFn);
 
     stateTable.grantReadWriteData(simulateFn);
     stateTable.grantReadWriteData(executeFn);
@@ -161,6 +194,12 @@ export class BeyondTokensStack extends cdk.Stack {
       value: agentcoreHelloFn.functionName,
     });
     new cdk.CfnOutput(this, "AgentCoreHelloApiUrl", {
+      value: agentcoreHelloApi.apiEndpoint,
+    });
+    new cdk.CfnOutput(this, "AgentCoreToolsFunctionName", {
+      value: agentcoreToolsFn.functionName,
+    });
+    new cdk.CfnOutput(this, "AgentCoreToolsApiUrl", {
       value: agentcoreHelloApi.apiEndpoint,
     });
   }
