@@ -129,6 +129,8 @@ export class BeyondTokensStack extends cdk.Stack {
       code: lambdaAsset,
       environment: {
         ARTIFACT_BUCKET: artifactsBucket.bucketName,
+        ENABLE_AGENTCORE_MEMORY: "1",
+        AGENTCORE_MEMORY_BACKEND: "in-memory",
       },
       timeout: cdk.Duration.seconds(15),
       reservedConcurrentExecutions: 1,

@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 import boto3
+import urllib.error
 import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,8 +39,20 @@ def _invoke_api(api_url: str, body: dict) -> dict:
     context = ssl.create_default_context()
     if os.environ.get("ALLOW_INSECURE_HTTPS") == "1":
         context = ssl._create_unverified_context()
-    with urllib.request.urlopen(request, timeout=10, context=context) as response:
-        return json.loads(response.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(request, timeout=10, context=context) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        payload = exc.read().decode("utf-8")
+        if payload:
+            try:
+                parsed = json.loads(payload)
+                if isinstance(parsed, dict) and "body" in parsed:
+                    return json.loads(parsed["body"]) if isinstance(parsed["body"], str) else parsed["body"]
+                return parsed
+            except json.JSONDecodeError:
+                pass
+        raise
 
 
 def _invoke_lambda(function_name: str, body: dict) -> dict:
@@ -72,15 +85,15 @@ def _run(api_url: str | None, function_name: str | None, body: dict) -> dict:
     if api_url:
         try:
             return _invoke_api(api_url, body)
-        except Exception:
-            return _invoke_lambda(function_name, body)
-    return _invoke_lambda(function_name, body)
-
-
-def _run_scenario(name: str, api_url: str | None, function_name: str | None, body: dict) -> None:
-    payload = _run(api_url, function_name, body)
-    print(f"\n== {name} ==")
-    print(json.dumps(_sanitize(payload), indent=2))
+        except Exception as exc:
+            if os.environ.get("ALLOW_LAMBDA_FALLBACK") == "1" and function_name:
+                print(f"API invoke failed; falling back to lambda invoke: {exc}")
+                return _invoke_lambda(function_name, body)
+            raise
+    if function_name:
+        print("API URL missing; invoking lambda directly")
+        return _invoke_lambda(function_name, body)
+    raise RuntimeError("Missing both API URL and Lambda function name")
 
 
 def main() -> None:
@@ -94,6 +107,11 @@ def main() -> None:
 
     if not api_url and not function_name:
         raise SystemExit("Missing AgentCore memory outputs. Run cdk deploy.")
+
+    if api_url:
+        print(f"Target API: {api_url.rstrip('/')}/agentcore/memory")
+    elif function_name:
+        print(f"Target Lambda fallback: {function_name}")
 
     os.environ.setdefault("ENABLE_AGENTCORE_MEMORY", "1")
 
@@ -113,9 +131,27 @@ def main() -> None:
         "requests": [{"op": "memory_get", "key": "demo"}],
     }
 
-    _run_scenario("memory_put (expect ok=true)", api_url, function_name, put_body)
-    _run_scenario("memory_get (expect ok=true)", api_url, function_name, get_body)
-    _run_scenario("budget_exceeded (expect ok=false)", api_url, function_name, fail_body)
+    put_payload = _run(api_url, function_name, put_body)
+    get_payload = _run(api_url, function_name, get_body)
+    fail_payload = _run(api_url, function_name, fail_body)
+
+    print("\n== memory_put (expect ok=true) ==")
+    print(json.dumps(_sanitize(put_payload), indent=2))
+    print("\n== memory_get (expect ok=true) ==")
+    print(json.dumps(_sanitize(get_payload), indent=2))
+    print("\n== budget_exceeded (expect ok=false) ==")
+    print(json.dumps(_sanitize(fail_payload), indent=2))
+
+    if not put_payload.get("ok"):
+        raise SystemExit("memory_put did not return ok=true")
+    if not get_payload.get("ok"):
+        raise SystemExit("memory_get did not return ok=true")
+    if put_payload.get("memory_enabled") is not True or get_payload.get("memory_enabled") is not True:
+        raise SystemExit("memory_enabled expected true for normal requests")
+    if fail_payload.get("ok") is not False:
+        raise SystemExit("budget_exceeded expected ok=false")
+    if fail_payload.get("error", {}).get("code") != "budget_exceeded":
+        raise SystemExit("budget_exceeded expected error.code=budget_exceeded")
 
 
 if __name__ == "__main__":

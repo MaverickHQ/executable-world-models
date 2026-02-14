@@ -29,6 +29,10 @@ def test_budget_enforced_for_memory_ops(monkeypatch):
     assert response["ok"] is False
     assert response["error"]["code"] == "budget_exceeded"
     assert response["error"]["limiter"] == "max_memory_ops"
+    assert response["memory_enabled"] is True
+    assert response["budget_state"]["memory_ops"] == 0
+    assert response["budget_state"]["memory_bytes"] == 0
+    assert response["memory"]["ops"] == []
 
 
 def test_budget_enforced_for_memory_bytes(monkeypatch):

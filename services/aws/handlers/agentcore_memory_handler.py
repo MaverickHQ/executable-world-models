@@ -73,15 +73,22 @@ def _budget_exceeded_response(
     state: BudgetState,
     limiter: str,
     message: str,
+    memory_enabled: bool,
 ) -> Dict[str, Any]:
     decision_payload = {
         "run_id": run_id,
         "mode": "agentcore-memory",
         "ok": False,
-        "error": {"code": "budget_exceeded", "limiter": limiter, "message": message},
+        "error": {
+            "code": "budget_exceeded",
+            "limiter": limiter,
+            "message": message,
+            "budgets": {"budget": budget.model_dump(), "budget_state": state.model_dump()},
+        },
+        "memory_enabled": memory_enabled,
         "budget": budget.model_dump(),
         "budget_state": state.model_dump(),
-        "memory": {},
+        "memory": {"ops": []},
         "artifact_dir": f"s3://{bucket_name}/{keys['artifact_prefix']}/",
     }
     report_body = _report_body(run_id, bucket_name, keys["artifact_prefix"], decision_payload)
@@ -105,13 +112,20 @@ def _budget_exceeded_response(
     s3.put_object(
         Bucket=bucket_name,
         Key=keys["memory_key"],
-        Body=json.dumps({}, indent=2).encode("utf-8"),
+        Body=json.dumps({"ops": []}, indent=2).encode("utf-8"),
     )
     return {
         "ok": False,
         "run_id": run_id,
         "mode": "agentcore-memory",
-        "error": {"code": "budget_exceeded", "limiter": limiter, "message": message},
+        "error": {
+            "code": "budget_exceeded",
+            "limiter": limiter,
+            "message": message,
+            "budgets": {"budget": budget.model_dump(), "budget_state": state.model_dump()},
+        },
+        "memory_enabled": memory_enabled,
+        "memory": {"ops": []},
         "artifact_dir": f"s3://{bucket_name}/{keys['artifact_prefix']}/",
         "budget": budget.model_dump(),
         "budget_state": state.model_dump(),
@@ -146,13 +160,40 @@ def _report_body(
     )
 
 
-def _resolve_store() -> Tuple[MemoryStore, str]:
+def _resolve_store() -> Tuple[MemoryStore, str, bool, bool, Optional[str]]:
     if os.environ.get("ENABLE_AGENTCORE_MEMORY") != "1":
-        return NoOpMemoryStore(), "disabled"
+        return NoOpMemoryStore(), "disabled", False, True, None
     store_kind = os.environ.get("AGENTCORE_MEMORY_BACKEND", "in-memory")
-    if store_kind == "agentcore":
-        return BedrockAgentCoreMemoryStore(), "agentcore"
-    return InMemoryMemoryStore(storage={}), "in-memory"
+    try:
+        if store_kind == "agentcore":
+            return BedrockAgentCoreMemoryStore(), "agentcore", True, True, None
+        return InMemoryMemoryStore(storage={}), "in-memory", True, True, None
+    except Exception as exc:  # pragma: no cover - defensive init guard
+        return NoOpMemoryStore(), store_kind, True, False, str(exc)
+
+
+def _precheck_budget(requests: list[MemoryRequest], budget: Budget) -> Optional[Dict[str, str]]:
+    total_ops = len(requests)
+    if total_ops > budget.max_memory_ops:
+        return {
+            "code": "budget_exceeded",
+            "limiter": "max_memory_ops",
+            "message": "budget exceeded: max_memory_ops",
+        }
+
+    total_bytes = 0
+    for request in requests:
+        payload = {"op": request.op, "key": request.key, "value": request.value}
+        total_bytes += estimate_memory_bytes(payload)
+
+    if total_bytes > budget.max_memory_bytes:
+        return {
+            "code": "budget_exceeded",
+            "limiter": "max_memory_bytes",
+            "message": "budget exceeded: max_memory_bytes",
+        }
+
+    return None
 
 
 def _record_memory_op(state: BudgetState, payload: Dict[str, Any], budget: Budget) -> Optional[str]:
@@ -227,7 +268,41 @@ def handler(event, context):
 
     budget = _build_budget(payload)
     state = BudgetState()
-    store, store_kind = _resolve_store()
+    requests = payload.requests or _default_requests(run_id)
+    store, store_kind, memory_enabled, store_init_ok, store_init_error = _resolve_store()
+
+    print(
+        "agentcore_memory config "
+        + json.dumps(
+            {
+                "memory_enabled": memory_enabled,
+                "memory_backend": store_kind,
+                "store_init_ok": store_init_ok,
+                "budget": budget.model_dump(),
+            },
+            sort_keys=True,
+        )
+    )
+
+    precheck_error = _precheck_budget(requests, budget) if memory_enabled else None
+    if precheck_error:
+        response_payload = _budget_exceeded_response(
+            run_id,
+            bucket_name,
+            keys,
+            budget,
+            state,
+            precheck_error.get("limiter", "max_memory_ops"),
+            precheck_error.get("message", "budget exceeded"),
+            memory_enabled,
+        )
+        if isinstance(event, dict) and event.get("requestContext", {}).get("http"):
+            return {
+                "statusCode": 400,
+                "headers": {"content-type": "application/json"},
+                "body": json.dumps(response_payload),
+            }
+        return response_payload
 
     if store_kind == "disabled":
         decision_payload = {
@@ -235,6 +310,7 @@ def handler(event, context):
             "mode": "agentcore-memory",
             "ok": True,
             "message": "memory disabled",
+            "memory_enabled": memory_enabled,
             "budget": budget.model_dump(),
             "budget_state": state.model_dump(),
             "memory": {"ops": []},
@@ -269,10 +345,14 @@ def handler(event, context):
             "run_id": run_id,
             "mode": "agentcore-memory",
             "message": "memory disabled",
+            "memory_enabled": memory_enabled,
+            "store_init_ok": store_init_ok,
             "artifact_dir": f"s3://{bucket_name}/{keys['artifact_prefix']}/",
             "budget": budget.model_dump(),
             "budget_state": state.model_dump(),
         }
+        if store_init_error:
+            response_payload["store_init_error"] = store_init_error
         if isinstance(event, dict) and event.get("requestContext", {}).get("http"):
             return {
                 "statusCode": 200,
@@ -281,7 +361,6 @@ def handler(event, context):
             }
         return response_payload
 
-    requests = payload.requests or _default_requests(run_id)
     try:
         memory_trace, error = _execute_requests(store, budget, state, requests)
     except MemoryStoreError as exc:
@@ -297,6 +376,7 @@ def handler(event, context):
             state,
             error.get("limiter", "max_memory_ops"),
             error.get("message", "budget exceeded"),
+            memory_enabled,
         )
     else:
         decision_payload = {
@@ -304,6 +384,7 @@ def handler(event, context):
             "mode": "agentcore-memory",
             "ok": error is None,
             "error": error,
+            "memory_enabled": memory_enabled,
             "budget": budget.model_dump(),
             "budget_state": state.model_dump(),
             "memory": memory_trace,
@@ -337,12 +418,17 @@ def handler(event, context):
             "ok": error is None,
             "run_id": run_id,
             "mode": "agentcore-memory",
+            "memory_enabled": memory_enabled,
+            "store_init_ok": store_init_ok,
             "artifact_dir": f"s3://{bucket_name}/{keys['artifact_prefix']}/",
             "budget": budget.model_dump(),
             "budget_state": state.model_dump(),
+            "memory": memory_trace,
         }
         if error:
             response_payload["error"] = error
+        if store_init_error:
+            response_payload["store_init_error"] = store_init_error
 
     if isinstance(event, dict) and event.get("requestContext", {}).get("http"):
         return {
