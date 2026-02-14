@@ -1,4 +1,4 @@
-.PHONY: setup lint test-unit test-integration test cdk-synth verify verify-aws demo-aws-planner smoke-aws-planner demo-agentcore-hello smoke-agentcore-hello deploy-agentcore-hello
+.PHONY: setup lint test-unit test-integration test cdk-synth verify verify-aws demo-aws-planner smoke-aws-planner demo-agentcore-base smoke-agentcore-base deploy-agentcore-base deploy-agentcore-tools smoke-agentcore-tools demo-agentcore-tools
 
 setup:
 	@if command -v uv >/dev/null 2>&1; then \
@@ -58,7 +58,10 @@ cdk-synth:
 cdk-deploy:
 	cd infra/cdk && npx cdk deploy --require-approval never
 
-deploy-agentcore-hello:
+deploy-agentcore-base:
+	cd infra/cdk && npx cdk deploy --require-approval never
+
+deploy-agentcore-tools:
 	cd infra/cdk && npx cdk deploy --require-approval never
 
 smoke-aws:
@@ -73,12 +76,18 @@ demo-aws-planner:
 smoke-aws-planner:
 	python3 scripts/smoke_aws_planner.py
 
-smoke-agentcore-hello:
+smoke-agentcore-base:
 	python3 scripts/smoke_agentcore_hello.py
 
-demo-agentcore-hello:
+demo-agentcore-base:
 	python3 scripts/smoke_agentcore_hello.py
 	python3 scripts/smoke_agentcore_hello.py
+
+smoke-agentcore-tools:
+	python3 scripts/smoke_agentcore_tools.py
+
+demo-agentcore-tools:
+	python3 scripts/demo_agentcore_tools.py
 
 verify: lint test demo-local
 
@@ -93,6 +102,9 @@ verify-aws:
 	$(MAKE) demo-aws
 	$(MAKE) smoke-aws-planner
 	$(MAKE) demo-aws-planner
-	$(MAKE) deploy-agentcore-hello
-	$(MAKE) smoke-agentcore-hello
-	$(MAKE) demo-agentcore-hello
+	$(MAKE) deploy-agentcore-base
+	$(MAKE) smoke-agentcore-base
+	$(MAKE) demo-agentcore-base
+	$(MAKE) deploy-agentcore-tools
+	$(MAKE) smoke-agentcore-tools
+	$(MAKE) demo-agentcore-tools
