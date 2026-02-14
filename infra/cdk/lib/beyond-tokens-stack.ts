@@ -15,6 +15,7 @@ export class BeyondTokensStack extends cdk.Stack {
     const artifactsBucket = new s3.Bucket(this, "ArtifactsBucket", {
       versioned: true,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.KMS_MANAGED,
       removalPolicy: cdk.RemovalPolicy.RETAIN,
       enforceSSL: true,
     });
@@ -86,6 +87,7 @@ export class BeyondTokensStack extends cdk.Stack {
       code: lambdaAsset,
       environment: lambdaEnv,
       timeout: cdk.Duration.seconds(30),
+      reservedConcurrentExecutions: 1,
       layers: [pythonDepsLayer],
     });
 
@@ -95,6 +97,7 @@ export class BeyondTokensStack extends cdk.Stack {
       code: lambdaAsset,
       environment: lambdaEnv,
       timeout: cdk.Duration.seconds(30),
+      reservedConcurrentExecutions: 1,
       layers: [pythonDepsLayer],
     });
 
@@ -104,6 +107,7 @@ export class BeyondTokensStack extends cdk.Stack {
       code: lambdaAsset,
       environment: lambdaEnv,
       timeout: cdk.Duration.seconds(30),
+      reservedConcurrentExecutions: 1,
       layers: [pythonDepsLayer],
     });
 
@@ -153,7 +157,7 @@ export class BeyondTokensStack extends cdk.Stack {
     });
 
     agentcoreHelloApi.addRoutes({
-      path: "/hello",
+      path: "/agentcore/base",
       methods: [apigwv2.HttpMethod.POST],
       integration: new apigwv2Integrations.HttpLambdaIntegration(
         "AgentCoreHelloIntegration",
