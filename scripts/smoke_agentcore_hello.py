@@ -29,7 +29,7 @@ def _sanitize(payload: dict) -> dict:
 
 
 def _invoke_api(api_url: str) -> dict:
-    url = api_url.rstrip("/") + "/hello"
+    url = api_url.rstrip("/") + "/agentcore/base"
     request = urllib.request.Request(
         url,
         data=json.dumps({}).encode("utf-8"),
