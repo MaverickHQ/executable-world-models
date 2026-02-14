@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.7.2 — AgentCore Memory (Cost-safe)
+- Added AgentCore memory handler with explicit budgets for ops/bytes.
+- Memory artifacts include decision/report/budgets/memory traces.
+- New smoke/demo scripts and Make targets for memory path.
+
 ## v0.7.0 — AgentCore Hello (Cost-safe)
 - Added AgentCore hello handler + gateway endpoint (no model calls, no memory).
 - Minimal artifacts written to S3 (decision.json + report.md).

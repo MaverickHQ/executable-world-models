@@ -27,6 +27,7 @@ def _decision_payload(run_id: str) -> Dict[str, object]:
             "max_tool_calls": 0,
             "max_model_calls": 0,
             "max_memory_ops": 0,
+            "max_memory_bytes": 0,
         },
     }
 

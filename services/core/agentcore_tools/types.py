@@ -34,6 +34,7 @@ class Budget(BaseModel):
     max_tool_calls: int = Field(ge=0)
     max_model_calls: int = Field(ge=0)
     max_memory_ops: int = Field(ge=0)
+    max_memory_bytes: int = Field(ge=0)
 
 
 class BudgetState(BaseModel):
@@ -43,6 +44,7 @@ class BudgetState(BaseModel):
     tool_calls: int = 0
     model_calls: int = 0
     memory_ops: int = 0
+    memory_bytes: int = 0
 
     def increment_step(self) -> None:
         self.steps += 1
@@ -56,10 +58,14 @@ class BudgetState(BaseModel):
     def increment_memory_ops(self) -> None:
         self.memory_ops += 1
 
+    def increment_memory_bytes(self, delta: int) -> None:
+        self.memory_bytes += delta
+
     def within_budget(self, budget: Budget) -> bool:
         return (
             self.steps <= budget.max_steps
             and self.tool_calls <= budget.max_tool_calls
             and self.model_calls <= budget.max_model_calls
             and self.memory_ops <= budget.max_memory_ops
+            and self.memory_bytes <= budget.max_memory_bytes
         )

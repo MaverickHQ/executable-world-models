@@ -19,7 +19,13 @@ def test_budget_exceeded_by_tool_calls():
         ToolRequest(name=ToolName.GET_PRICE_CONTEXT, args={}),
         ToolRequest(name=ToolName.GET_PRICE_CONTEXT, args={}),
     ]
-    budget = Budget(max_steps=5, max_tool_calls=1, max_model_calls=0, max_memory_ops=0)
+    budget = Budget(
+        max_steps=5,
+        max_tool_calls=1,
+        max_model_calls=0,
+        max_memory_ops=0,
+        max_memory_bytes=0,
+    )
 
     results, state = run_tool_loop(requests, registry, budget)
 
@@ -39,7 +45,13 @@ def test_budget_exceeded_by_steps():
         ToolRequest(name=ToolName.GET_PRICE_CONTEXT, args={}),
         ToolRequest(name=ToolName.GET_PRICE_CONTEXT, args={}),
     ]
-    budget = Budget(max_steps=1, max_tool_calls=5, max_model_calls=0, max_memory_ops=0)
+    budget = Budget(
+        max_steps=1,
+        max_tool_calls=5,
+        max_model_calls=0,
+        max_memory_ops=0,
+        max_memory_bytes=0,
+    )
 
     results, state = run_tool_loop(requests, registry, budget)
 

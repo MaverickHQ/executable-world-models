@@ -21,3 +21,4 @@ def test_agentcore_hello_payload_has_required_fields(monkeypatch):
     assert budgets["max_tool_calls"] == 0
     assert budgets["max_model_calls"] == 0
     assert budgets["max_memory_ops"] == 0
+    assert budgets["max_memory_bytes"] == 0
