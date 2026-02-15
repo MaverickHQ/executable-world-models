@@ -6,6 +6,8 @@ import * as s3 from "aws-cdk-lib/aws-s3";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as apigwv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as apigwv2Integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
+import * as logs from "aws-cdk-lib/aws-logs";
+import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
 import * as path from "path";
 
 export class BeyondTokensStack extends cdk.Stack {
@@ -152,9 +154,44 @@ export class BeyondTokensStack extends cdk.Stack {
       layers: [pythonDepsLayer],
     });
 
+    const agentcoreLoopFn = new lambda.Function(this, "AgentCoreLoopFn", {
+      runtime: lambda.Runtime.PYTHON_3_11,
+      handler: "services.aws.handlers.agentcore_loop_handler.handler",
+      code: lambdaAsset,
+      environment: lambdaEnv,
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 128,
+      reservedConcurrentExecutions: 1,
+      logRetention: logs.RetentionDays.TWO_WEEKS,
+      layers: [pythonDepsLayer],
+    });
+
     const agentcoreHelloApi = new apigwv2.HttpApi(this, "AgentCoreHelloApi", {
       apiName: "agentcore-hello",
     });
+
+    const agentcoreAccessLogGroup = new logs.LogGroup(this, "AgentCoreHttpApiAccessLogs", {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    const defaultStage = agentcoreHelloApi.defaultStage?.node.defaultChild as apigwv2.CfnStage;
+    if (defaultStage) {
+      defaultStage.accessLogSettings = {
+        destinationArn: agentcoreAccessLogGroup.logGroupArn,
+        format: JSON.stringify({
+          requestId: "$context.requestId",
+          ip: "$context.identity.sourceIp",
+          requestTime: "$context.requestTime",
+          httpMethod: "$context.httpMethod",
+          routeKey: "$context.routeKey",
+          status: "$context.status",
+          protocol: "$context.protocol",
+          responseLength: "$context.responseLength",
+          integrationErrorMessage: "$context.integrationErrorMessage",
+        }),
+      };
+    }
 
     agentcoreHelloApi.addRoutes({
       path: "/agentcore/base",
@@ -183,12 +220,96 @@ export class BeyondTokensStack extends cdk.Stack {
       ),
     });
 
+    agentcoreHelloApi.addRoutes({
+      path: "/agentcore/loop",
+      methods: [apigwv2.HttpMethod.POST],
+      integration: new apigwv2Integrations.HttpLambdaIntegration(
+        "AgentCoreLoopIntegration",
+        agentcoreLoopFn,
+      ),
+    });
+
+    const loopRequestsMetric = new cloudwatch.Metric({
+      namespace: "BeyondTokens/AgentCoreLoop",
+      metricName: "Requests",
+      dimensionsMap: { service: "beyond-tokens", component: "agentcore-loop", mode: "agentcore-loop" },
+      statistic: "Sum",
+      period: cdk.Duration.minutes(5),
+    });
+    const loopClientErrorsMetric = new cloudwatch.Metric({
+      namespace: "BeyondTokens/AgentCoreLoop",
+      metricName: "ClientErrors",
+      dimensionsMap: { service: "beyond-tokens", component: "agentcore-loop", mode: "agentcore-loop" },
+      statistic: "Sum",
+      period: cdk.Duration.minutes(5),
+    });
+    const loopServerErrorsMetric = new cloudwatch.Metric({
+      namespace: "BeyondTokens/AgentCoreLoop",
+      metricName: "ServerErrors",
+      dimensionsMap: { service: "beyond-tokens", component: "agentcore-loop", mode: "agentcore-loop" },
+      statistic: "Sum",
+      period: cdk.Duration.minutes(5),
+    });
+    const loopLatencyP50Metric = new cloudwatch.Metric({
+      namespace: "BeyondTokens/AgentCoreLoop",
+      metricName: "LatencyMs",
+      dimensionsMap: { service: "beyond-tokens", component: "agentcore-loop", mode: "agentcore-loop" },
+      statistic: "p50",
+      period: cdk.Duration.minutes(5),
+    });
+    const loopLatencyP95Metric = new cloudwatch.Metric({
+      namespace: "BeyondTokens/AgentCoreLoop",
+      metricName: "LatencyMs",
+      dimensionsMap: { service: "beyond-tokens", component: "agentcore-loop", mode: "agentcore-loop" },
+      statistic: "p95",
+      period: cdk.Duration.minutes(5),
+    });
+
+    const loopServerErrorsAlarm = new cloudwatch.Alarm(this, "AgentCoreLoopServerErrorsAlarm", {
+      metric: loopServerErrorsMetric,
+      threshold: 1,
+      evaluationPeriods: 1,
+      datapointsToAlarm: 1,
+      comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+      alarmDescription: "AgentCore loop server errors detected in the last 5 minutes",
+    });
+
+    const loopLatencyP95Alarm = new cloudwatch.Alarm(this, "AgentCoreLoopLatencyP95Alarm", {
+      metric: loopLatencyP95Metric,
+      threshold: 1000,
+      evaluationPeriods: 1,
+      datapointsToAlarm: 1,
+      comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+      alarmDescription: "AgentCore loop p95 latency above 1000ms over 5 minutes",
+    });
+
+    const loopDashboard = new cloudwatch.Dashboard(this, "AgentCoreLoopDashboard", {
+      dashboardName: `${cdk.Stack.of(this).stackName}-AgentCoreLoop`,
+    });
+    loopDashboard.addWidgets(
+      new cloudwatch.GraphWidget({
+        title: "AgentCore Loop Requests",
+        left: [loopRequestsMetric],
+      }),
+      new cloudwatch.GraphWidget({
+        title: "AgentCore Loop Client/Server Errors",
+        left: [loopClientErrorsMetric, loopServerErrorsMetric],
+      }),
+      new cloudwatch.GraphWidget({
+        title: "AgentCore Loop Latency p50/p95 (ms)",
+        left: [loopLatencyP50Metric, loopLatencyP95Metric],
+      }),
+    );
+
     artifactsBucket.grantReadWrite(simulateFn);
     artifactsBucket.grantReadWrite(statusFn);
     artifactsBucket.grantReadWrite(executeFn);
     artifactsBucket.grantReadWrite(agentcoreHelloFn);
     artifactsBucket.grantReadWrite(agentcoreToolsFn);
     artifactsBucket.grantReadWrite(agentcoreMemoryFn);
+    artifactsBucket.grantReadWrite(agentcoreLoopFn);
     agentcoreMemoryTable.grantReadWriteData(agentcoreMemoryFn);
 
     stateTable.grantReadWriteData(simulateFn);
@@ -247,6 +368,21 @@ export class BeyondTokensStack extends cdk.Stack {
     });
     new cdk.CfnOutput(this, "AgentCoreMemoryApiUrl", {
       value: agentcoreHelloApi.apiEndpoint,
+    });
+    new cdk.CfnOutput(this, "AgentCoreLoopFunctionName", {
+      value: agentcoreLoopFn.functionName,
+    });
+    new cdk.CfnOutput(this, "AgentCoreLoopApiUrl", {
+      value: agentcoreHelloApi.apiEndpoint,
+    });
+    new cdk.CfnOutput(this, "AgentCoreLoopDashboardName", {
+      value: loopDashboard.dashboardName,
+    });
+    new cdk.CfnOutput(this, "AgentCoreLoopErrorsAlarmName", {
+      value: loopServerErrorsAlarm.alarmName,
+    });
+    new cdk.CfnOutput(this, "AgentCoreLoopLatencyP95AlarmName", {
+      value: loopLatencyP95Alarm.alarmName,
     });
     new cdk.CfnOutput(this, "AgentCoreMemoryTableName", {
       value: agentcoreMemoryTable.tableName,
