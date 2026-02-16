@@ -137,8 +137,5 @@ smoke-agentcore-loop:
 demo-agentcore-loop:
 	python3 scripts/demo_agentcore_loop.py
 
-
-
-
-
-
+deploy-agentcore-loop-planner:
+	cd infra/cdk && npx cdk deploy --require-approval never -c enableLocalPlanner=1

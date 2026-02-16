@@ -59,6 +59,7 @@ export class BeyondTokensStack extends cdk.Stack {
       POLICIES_TABLE: policiesTable.tableName,
       FIXTURE_NAME: "trading_path.json",
       ENABLE_BEDROCK_PLANNER: this.node.tryGetContext("enableBedrockPlanner") ? "1" : "0",
+      ENABLE_LOCAL_PLANNER: this.node.tryGetContext("enableLocalPlanner") ? "1" : "0",
       BEDROCK_MODEL_ID: this.node.tryGetContext("bedrockModelId") ?? "",
     };
 
