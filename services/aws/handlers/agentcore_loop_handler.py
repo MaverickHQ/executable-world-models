@@ -3,11 +3,13 @@ from __future__ import annotations
 import json
 import os
 import time
+from datetime import datetime, timezone
 from typing import Any
+from uuid import uuid4
 
 from services.core.agentcore_loop.run import run_agentcore_loop
 from services.core.agentcore_loop.types import LoopBudgets, LoopRequest
-
+from services.core.persistence.runs_dynamo import put_run
 
 NAMESPACE = "BeyondTokens/AgentCoreLoop"
 SERVICE = "beyond-tokens"
@@ -104,12 +106,22 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         req = _parse(event)
         result = run_agentcore_loop(req)
         status = 200 if result.get("ok") else 400
-    except Exception:
+    except Exception as exc:
         req = req or LoopRequest(budgets=LoopBudgets())
+        err = "internal_error"
+        if isinstance(exc, RuntimeError):
+            msg = str(exc)
+            if msg == "artifact_upload_failed":
+                err = "artifact_upload_failed"
+            elif msg == "run_record_write_failed":
+                err = "run_record_write_failed"
+            elif msg == "persistence_config_missing":
+                err = "persistence_config_missing"
         result = {
             "ok": False,
+            "run_id": str(uuid4()),
             "mode": req.mode,
-            "error": {"code": "internal_error", "message": "Internal Server Error"},
+            "error": {"code": err, "message": "Internal Server Error"},
         }
         status = 500
 
@@ -144,6 +156,40 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         http_status=status,
         duration_ms=duration_ms,
     )
+
+    runs_table = os.environ.get("RUNS_TABLE", "")
+    if runs_table:
+        run_record = {
+            "run_id": result.get("run_id") or str(uuid4()),
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "mode": req.mode,
+            "symbols": list(req.symbols),
+            "steps": req.steps,
+            "ok": bool(result.get("ok")),
+            "http_status": status,
+            "duration_ms": duration_ms,
+            "final_state": result.get("final_state"),
+            "artifact_dir": result.get("artifact_dir"),
+            "error": result.get("error"),
+            "trace_id": trace_id,
+            "request_id": request_id,
+        }
+        try:
+            put_run(runs_table, run_record)
+        except Exception as exc:  # pragma: no cover - defensive logging path
+            _log_json(
+                {
+                    "service": SERVICE,
+                    "component": COMPONENT,
+                    "mode": req.mode,
+                    "level": "warning",
+                    "code": "run_persistence_failed",
+                    "message": str(exc),
+                    "run_id": run_record["run_id"],
+                    "request_id": request_id,
+                    "trace_id": trace_id,
+                }
+            )
 
     return {
         "statusCode": status,

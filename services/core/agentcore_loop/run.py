@@ -3,6 +3,7 @@ from __future__ import annotations
 import tempfile
 from pathlib import Path
 from typing import Any, Dict
+from uuid import uuid4
 
 from services.core.agentcore_loop.types import LoopRequest
 from services.core.loop import run_loop
@@ -29,9 +30,12 @@ def _validate_budgets(req: LoopRequest) -> None:
 
 
 def run_agentcore_loop(req: LoopRequest) -> Dict[str, Any]:
+    run_id = str(uuid4())
+
     if req.mode != "agentcore-loop":
         return {
             "ok": False,
+            "run_id": run_id,
             "mode": req.mode,
             "error": {"code": "invalid_mode", "message": "mode must be 'agentcore-loop'"},
         }
@@ -41,6 +45,7 @@ def run_agentcore_loop(req: LoopRequest) -> Dict[str, Any]:
     except ValueError as e:
         return {
             "ok": False,
+            "run_id": run_id,
             "mode": req.mode,
             "error": {"code": "invalid_budget", "message": str(e)},
         }
@@ -65,6 +70,7 @@ def run_agentcore_loop(req: LoopRequest) -> Dict[str, Any]:
     out: Dict[str, Any] = {
         "ok": True,
         "mode": req.mode,
+        "run_id": run_id,
         "steps": steps,
         "tape_length": len(result.tape_rows),
         "execution_count": len(result.execution_rows),
