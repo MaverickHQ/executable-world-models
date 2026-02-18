@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 @dataclass(frozen=True)
@@ -26,3 +26,24 @@ class Plan:
     """
     steps: List[PlanStep]
     meta: Dict[str, Any]
+
+@dataclass(frozen=True)
+class PlannerError:
+    code: str
+    message: str
+
+
+@dataclass(frozen=True)
+class PlannerRejection:
+    rejected_step_index: int
+    violations: List[Dict[str, str]]
+
+
+@dataclass
+class PlannerResult:
+    plan: List[Any]
+    planner_name: str
+    metadata: Dict[str, Any]
+    error: Optional[PlannerError] = None
+    rejection: Optional[PlannerRejection] = None
+
