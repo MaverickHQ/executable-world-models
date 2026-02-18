@@ -21,6 +21,9 @@ dev = [
   "ruff",
 ]
 
+[project.scripts]
+ewm = "services.cli.main:main"
+
 [tool.setuptools]
 packages = ["services"]
 
