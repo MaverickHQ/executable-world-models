@@ -1,3 +1,13 @@
+
+## v0.7.10-cli — CLI runs inspection (P01)
+- Enhanced 'ewm runs latest' with robust parsing for dict-of-runs format
+- Added decision field (APPROVED/REJECTED/UNKNOWN)
+- Human-readable rejection errors with code and message
+- Rounded money values (2 decimal places)
+- created_at timestamp display in summary
+- Improved 'plan: none' wording
+- 11 unit tests for CLI runs commands
+- All tests pass (lint + pytest)
 # Changelog
 
 ## v0.7.2 — AgentCore Memory (Cost-safe)

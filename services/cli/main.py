@@ -29,21 +29,21 @@ def build_parser() -> argparse.ArgumentParser:
     mode_parser = sub.add_parser("mode")
     mode_sub = mode_parser.add_subparsers(dest="mode_cmd", required=True)
     mode_show = mode_sub.add_parser("show")
-    mode_show.add_argument("--raw", action="store_true")
+    mode_show.add_argument("--raw", action="store_true", help="Output raw value without label")
     mode_set = mode_sub.add_parser("set")
     mode_set.add_argument("value", choices=["local", "aws", "both"])
 
     target_parser = sub.add_parser("target")
     target_sub = target_parser.add_subparsers(dest="target_cmd", required=True)
     target_show = target_sub.add_parser("show")
-    target_show.add_argument("--raw", action="store_true")
+    target_show.add_argument("--raw", action="store_true", help="Output raw value without label")
     target_set = target_sub.add_parser("set")
     target_set.add_argument("value", choices=["local", "aws", "both"])
 
     env_parser = sub.add_parser("env")
     env_sub = env_parser.add_subparsers(dest="env_cmd", required=True)
     env_show = env_sub.add_parser("show")
-    env_show.add_argument("--raw", action="store_true")
+    env_show.add_argument("--raw", action="store_true", help="Output raw value without label")
     env_set = env_sub.add_parser("set")
     env_set.add_argument("value", choices=["paper", "prod"])
 
@@ -62,7 +62,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     runs_parser = sub.add_parser("runs")
     runs_sub = runs_parser.add_subparsers(dest="runs_cmd", required=True)
-    runs_sub.add_parser("latest")
+    runs_latest_parser = runs_sub.add_parser("latest")
+    runs_latest_parser.add_argument("--raw", action="store_true", help="Output raw JSON")
+    runs_latest_parser.add_argument("--json", action="store_true", help="Output pretty-printed JSON")
     runs_tail_parser = runs_sub.add_parser("tail")
     runs_tail_parser.add_argument("--n", type=int, default=10)
 
@@ -80,24 +82,21 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.command == "mode":
             if args.mode_cmd == "show":
-                value = show_mode()
-                print(value if args.raw else f"mode: {value}")
+                print(show_mode(raw=getattr(args, "raw", False)))
                 return 0
             print(set_mode(args.value))
             return 0
 
         if args.command == "target":
             if args.target_cmd == "show":
-                value = show_target()
-                print(value if args.raw else f"target: {value}")
+                print(show_target(raw=getattr(args, "raw", False)))
                 return 0
             print(set_target(args.value))
             return 0
 
         if args.command == "env":
             if args.env_cmd == "show":
-                value = show_env()
-                print(value if args.raw else f"env: {value}")
+                print(show_env(raw=getattr(args, "raw", False)))
                 return 0
             print(set_env(args.value))
             return 0
@@ -128,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
 
         if args.command == "runs":
             if args.runs_cmd == "latest":
-                return runs_latest()
+                return runs_latest(raw=args.raw, json_output=args.json)
             return runs_tail(args.n)
     except ValueError as exc:
         print(str(exc), file=sys.stderr)

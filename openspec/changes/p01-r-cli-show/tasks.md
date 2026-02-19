@@ -37,12 +37,12 @@ Required test commands:
   - `git branch --show-current`
 - [x] Review final diff
   - `git status`
-- [ ] Commit with scoped message
+- [x] Commit with scoped message
   - Example: `cli: add labeled show output with --raw (p01-r-cli-show)`
-- [ ] Verify commit on expected branch
+- [x] Verify commit on expected branch
   - `git log --oneline -n 1`
-- [ ] Push branch
-- [ ] Verify upstream tracking
+- [x] Push branch
+- [x] Verify upstream tracking
   - `git rev-parse --abbrev-ref --symbolic-full-name @{u}`
 
 ## Phase 6 — Optional release tasks (ONLY if explicitly releasing)
