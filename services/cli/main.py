@@ -64,7 +64,9 @@ def build_parser() -> argparse.ArgumentParser:
     runs_sub = runs_parser.add_subparsers(dest="runs_cmd", required=True)
     runs_latest_parser = runs_sub.add_parser("latest")
     runs_latest_parser.add_argument("--raw", action="store_true", help="Output raw JSON")
-    runs_latest_parser.add_argument("--json", action="store_true", help="Output pretty-printed JSON")
+    runs_latest_parser.add_argument(
+        "--json", action="store_true", help="Output pretty-printed JSON"
+    )
     runs_tail_parser = runs_sub.add_parser("tail")
     runs_tail_parser.add_argument("--n", type=int, default=10)
 

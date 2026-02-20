@@ -150,7 +150,7 @@ def test_extract_runs_rejects_non_run_dict(monkeypatch, capsys, tmp_path) -> Non
     (runs_dir / "runs.json").write_text(json.dumps(payload), encoding="utf-8")
 
     monkeypatch.setattr(runs, "_repo_root", lambda _cwd=None: repo)
-    rc = runs.runs_latest()
+    runs.runs_latest()
     out = capsys.readouterr().out
 
     # Should not find any runs
@@ -195,7 +195,12 @@ def test_rejection_summary_includes_fields(monkeypatch, capsys, tmp_path) -> Non
                 {
                     "step_index": 0,
                     "accepted": False,
-                    "action": {"type": "PlaceBuy", "symbol": "AAPL", "quantity": 10.0, "price": 150.0},
+                    "action": {
+                        "type": "PlaceBuy",
+                        "symbol": "AAPL",
+                        "quantity": 10.0,
+                        "price": 150.0,
+                    },
                     "errors": [{"code": "position_limit", "message": "Position limit exceeded"}],
                 }
             ],

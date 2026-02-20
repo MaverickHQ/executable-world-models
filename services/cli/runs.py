@@ -211,8 +211,9 @@ def _latest_summary_lines(run: dict[str, Any]) -> list[str]:
 
         # Prefer explicit rejected_step_index when it points to a step
         if isinstance(rejected_step_index, int) and isinstance(steps, list):
-            if 0 <= rejected_step_index < len(steps) and isinstance(steps[rejected_step_index], dict):
-                rejected_step = steps[rejected_step_index]
+            idx = rejected_step_index
+            if 0 <= idx < len(steps) and isinstance(steps[idx], dict):
+                rejected_step = steps[idx]
 
         # Fallback: first step with accepted == False
         if rejected_step is None and isinstance(steps, list):
