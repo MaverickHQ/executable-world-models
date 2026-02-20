@@ -191,6 +191,60 @@ The CLI is designed to control execution, not bypass safeguards.
 
 ⸻
 
+## API Endpoints
+
+### Health Check
+The `/health` endpoint provides a deterministic health status:
+```json
+{
+  "status": "ok",
+  "version": "0.8.0"
+}
+```
+
+### Error Response Format
+All API errors follow a standardized format per OpenSpec:
+```json
+{
+  "error": {
+    "code": "string",
+    "message": "string",
+    "details": {},
+    "request_id": "string"
+  }
+}
+```
+
+## Configuration
+
+### Strategy Path
+The loop strategy path is configurable via the `strategy_path` field in requests:
+```json
+{
+  "strategy_path": "examples/strategies/threshold_demo.json"
+}
+```
+Defaults to `examples/strategies/threshold_demo.json` if not specified.
+
+## Testing
+
+Run all tests:
+```bash
+pytest tests/ -q
+```
+
+Run contract tests:
+```bash
+pytest tests/contract/ -q
+```
+
+Run smoke test:
+```bash
+python3 scripts/smoke_health.py
+```
+
+---
+
 Versioning
 
 v0.7.0-base → AgentCore baseline (no model calls)
@@ -198,4 +252,5 @@ v0.7.1-tools → Tool calling + budget enforcement
 v0.7.2-memory → Optional memory path
 v0.7.6-planner → Local planner integration
 v0.7.7-cli → Operational CLI controls
+v0.8.0 → Health endpoint, contract tests, config strategy, structured logging
 

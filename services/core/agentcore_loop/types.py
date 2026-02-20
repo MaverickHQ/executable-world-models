@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+
+DEFAULT_STRATEGY_PATH = "examples/strategies/threshold_demo.json"
 
 
 @dataclass(frozen=True)
@@ -21,3 +24,4 @@ class LoopRequest:
     steps: int = 5
     write_artifacts: bool = True
     mode: str = "agentcore-loop"
+    strategy_path: str = field(default=DEFAULT_STRATEGY_PATH)

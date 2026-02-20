@@ -1,3 +1,11 @@
+## v0.8.0 — Health, Contract Tests, Config Strategy (R3-R7, R10)
+- **R6**: Added `/health` endpoint with deterministic payload per OpenSpec
+- **R4**: Standardized API error format (code, message, details, request_id)
+- **R10**: Added contract tests in `tests/contract/`
+- **R7**: Loop strategy path is now configurable via `strategy_path` field
+- **R3**: Extracted shared artifact serialization (`serialize_simulation_result`)
+- **R5**: Added structured logging module with correlation ID support
+- All 117 unit tests pass
 
 ## v0.7.10-cli — CLI runs inspection (P01)
 - Enhanced 'ewm runs latest' with robust parsing for dict-of-runs format
@@ -8,6 +16,7 @@
 - Improved 'plan: none' wording
 - 11 unit tests for CLI runs commands
 - All tests pass (lint + pytest)
+
 # Changelog
 
 ## v0.7.2 — AgentCore Memory (Cost-safe)

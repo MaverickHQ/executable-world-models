@@ -6,13 +6,11 @@ from pathlib import Path
 from typing import Any, Dict
 from uuid import uuid4
 
-from services.core.agentcore_loop.types import LoopRequest
+from services.core.agentcore_loop.types import DEFAULT_STRATEGY_PATH, LoopRequest
 from services.core.loop import run_loop
 from services.core.market.generator import generate_market_path
 from services.core.planner import LocalPlanner
 from services.core.strategy import load_strategy
-
-STRATEGY_PATH = "examples/strategies/threshold_demo.json"
 
 
 def _get_max_model_calls(req: LoopRequest) -> int:
@@ -83,7 +81,8 @@ def run_agentcore_loop(req: LoopRequest) -> Dict[str, Any]:
         seed=req.seed,
     )
 
-    strategy = load_strategy(STRATEGY_PATH)
+    strategy_path = req.strategy_path if req.strategy_path else DEFAULT_STRATEGY_PATH
+    strategy = load_strategy(strategy_path)
     steps = min(req.steps, len(market_path.steps))
 
     planner = LocalPlanner(enabled=_planner_enabled())
