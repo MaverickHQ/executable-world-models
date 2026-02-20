@@ -17,14 +17,38 @@ COMPONENT = "agentcore-loop"
 
 
 def _trace_id(event: dict[str, Any]) -> str:
+    """
+    Get correlation ID from request.
+    Priority: x-correlation-id (case-insensitive) > x-amzn-trace-id > _X_AMZN_TRACE_ID env > UUID
+    """
+    from uuid import uuid4
+    
     headers = event.get("headers") or {}
     if not isinstance(headers, dict):
-        return os.environ.get("_X_AMZN_TRACE_ID", "")
-    return (
-        headers.get("x-amzn-trace-id")
-        or headers.get("X-Amzn-Trace-Id")
-        or os.environ.get("_X_AMZN_TRACE_ID", "")
-    )
+        # Check all common header case variations
+        for key in headers.keys() if isinstance(headers, dict) else []:
+            key_lower = key.lower()
+            if key_lower == "x-correlation-id":
+                return headers[key]
+    
+    # Check case-insensitive for x-correlation-id
+    if isinstance(headers, dict):
+        for key, value in headers.items():
+            if key.lower() == "x-correlation-id" and value:
+                return value
+    
+    # Fall back to x-amzn-trace-id
+    if isinstance(headers, dict):
+        trace_id = (
+            headers.get("x-amzn-trace-id")
+            or headers.get("X-Amzn-Trace-Id")
+            or os.environ.get("_X_AMZN_TRACE_ID", "")
+        )
+        if trace_id:
+            return trace_id
+    
+    # Final fallback: generate UUID
+    return str(uuid4())
 
 
 def _log_json(payload: dict[str, Any]) -> None:
@@ -34,7 +58,7 @@ def _log_json(payload: dict[str, Any]) -> None:
 def _emit_emf_metrics(
     *,
     request_id: str,
-    trace_id: str,
+    correlation_id: str,
     mode: str,
     http_status: int,
     duration_ms: int,
@@ -62,7 +86,7 @@ def _emit_emf_metrics(
             "component": COMPONENT,
             "mode": mode,
             "request_id": request_id,
-            "trace_id": trace_id,
+            "correlation_id": correlation_id,
             "Requests": 1,
             "ClientErrors": client_errors,
             "ServerErrors": server_errors,
@@ -79,6 +103,8 @@ def _parse(event: dict[str, Any]) -> LoopRequest:
         body = body_raw
 
     budgets = body.get("budgets") or {}
+    strategy_path = body.get("strategy_path")
+    upload_s3 = body.get("upload_s3", True)
     return LoopRequest(
         budgets=LoopBudgets(
             max_steps=int(budgets.get("max_steps", 5)),
@@ -92,7 +118,9 @@ def _parse(event: dict[str, Any]) -> LoopRequest:
         starting_cash=float(body.get("starting_cash", 1000.0)),
         steps=int(body.get("steps", 5)),
         write_artifacts=bool(body.get("write_artifacts", True)),
+        upload_s3=bool(upload_s3),
         mode=str(body.get("mode", "agentcore-loop")),
+        strategy_path=str(strategy_path) if strategy_path else None,
     )
 
 
@@ -134,13 +162,16 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         "max_memory_ops": req.budgets.max_memory_ops,
         "max_memory_bytes": req.budgets.max_memory_bytes,
     }
+    # Grep-friendly log line for correlation tracking
+    print(f"correlation_id={trace_id}")
+    
     _log_json(
         {
             "service": SERVICE,
             "component": COMPONENT,
             "mode": req.mode,
             "request_id": request_id,
-            "trace_id": trace_id,
+            "correlation_id": trace_id,
             "http_status": status,
             "duration_ms": duration_ms,
             "steps": req.steps,
@@ -151,7 +182,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     )
     _emit_emf_metrics(
         request_id=request_id,
-        trace_id=trace_id,
+        correlation_id=trace_id,
         mode=req.mode,
         http_status=status,
         duration_ms=duration_ms,
@@ -190,6 +221,10 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                     "trace_id": trace_id,
                 }
             )
+
+    # Add correlation ID to response
+    if trace_id:
+        result["correlation_id"] = trace_id
 
     return {
         "statusCode": status,

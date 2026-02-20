@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import tempfile
 from pathlib import Path
@@ -112,12 +113,61 @@ def run_agentcore_loop(req: LoopRequest) -> Dict[str, Any]:
         "tape_length": len(result.tape_rows),
         "execution_count": len(result.execution_rows),
         "final_state": {
-            "cash_balance": result.final_state.cash_balance,
+            "cash_balance": round(result.final_state.cash_balance, 2),
             "positions": result.final_state.positions,
         },
     }
 
     if req.write_artifacts:
         out["artifact_dir"] = str(data_dir)
+
+    # Upload artifacts to S3 if enabled
+    if req.upload_s3:
+        artifact_bucket = os.environ.get("ARTIFACT_BUCKET", "")
+        if artifact_bucket:
+            try:
+                import boto3
+                s3_client = boto3.client("s3")
+                prefix = f"artifacts/{run_id}"
+                
+                # Build trajectory payload from tape_rows
+                trajectory_data = {
+                    "run_id": run_id,
+                    "trajectory": [state.to_dict() for state in result.tape_rows],
+                }
+                
+                # Build decision payload
+                decision_data = {
+                    "run_id": run_id,
+                    "approved": True,
+                    "rejected_step_index": None,
+                }
+                
+                # Build deltas payload from execution_rows
+                deltas_data = {
+                    "run_id": run_id,
+                    "deltas": [row.to_dict() for row in result.execution_rows],
+                }
+                
+                # Upload to S3
+                s3_client.put_object(
+                    Bucket=artifact_bucket,
+                    Key=f"{prefix}/trajectory.json",
+                    Body=json.dumps(trajectory_data).encode("utf-8"),
+                )
+                s3_client.put_object(
+                    Bucket=artifact_bucket,
+                    Key=f"{prefix}/decision.json",
+                    Body=json.dumps(decision_data).encode("utf-8"),
+                )
+                s3_client.put_object(
+                    Bucket=artifact_bucket,
+                    Key=f"{prefix}/deltas.json",
+                    Body=json.dumps(deltas_data).encode("utf-8"),
+                )
+                out["artifact_s3_prefix"] = prefix
+            except Exception as e:
+                # Log error but don't fail the request
+                out["artifact_s3_error"] = str(e)
 
     return out

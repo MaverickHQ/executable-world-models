@@ -114,6 +114,14 @@ export class BeyondTokensStack extends cdk.Stack {
       layers: [pythonDepsLayer],
     });
 
+    const healthFn = new lambda.Function(this, "HealthFn", {
+      runtime: lambda.Runtime.PYTHON_3_11,
+      handler: "services.aws.handlers.health_handler.handler",
+      code: lambdaAsset,
+      timeout: cdk.Duration.seconds(10),
+      layers: [pythonDepsLayer],
+    });
+
     const agentcoreHelloFn = new lambda.Function(this, "AgentCoreHelloFn", {
       runtime: lambda.Runtime.PYTHON_3_11,
       handler: "services.aws.handlers.agentcore_hello_handler.handler",
@@ -159,7 +167,10 @@ export class BeyondTokensStack extends cdk.Stack {
       runtime: lambda.Runtime.PYTHON_3_11,
       handler: "services.aws.handlers.agentcore_loop_handler.handler",
       code: lambdaAsset,
-      environment: lambdaEnv,
+      environment: {
+        ...lambdaEnv,
+        RUNS_TABLE: runsTable.tableName,
+      },
       timeout: cdk.Duration.seconds(30),
       memorySize: 128,
       reservedConcurrentExecutions: 1,
@@ -193,6 +204,15 @@ export class BeyondTokensStack extends cdk.Stack {
         }),
       };
     }
+
+    agentcoreHelloApi.addRoutes({
+      path: "/health",
+      methods: [apigwv2.HttpMethod.GET],
+      integration: new apigwv2Integrations.HttpLambdaIntegration(
+        "HealthIntegration",
+        healthFn,
+      ),
+    });
 
     agentcoreHelloApi.addRoutes({
       path: "/agentcore/base",
@@ -310,6 +330,7 @@ export class BeyondTokensStack extends cdk.Stack {
     artifactsBucket.grantReadWrite(agentcoreHelloFn);
     artifactsBucket.grantReadWrite(agentcoreToolsFn);
     artifactsBucket.grantReadWrite(agentcoreMemoryFn);
+    // AgentCoreLoopFn needs explicit S3 permissions for artifacts
     artifactsBucket.grantReadWrite(agentcoreLoopFn);
     agentcoreMemoryTable.grantReadWriteData(agentcoreMemoryFn);
 
@@ -319,6 +340,7 @@ export class BeyondTokensStack extends cdk.Stack {
     runsTable.grantReadWriteData(simulateFn);
     runsTable.grantReadWriteData(statusFn);
     runsTable.grantReadWriteData(executeFn);
+    runsTable.grantReadWriteData(agentcoreLoopFn);
 
     policiesTable.grantReadWriteData(simulateFn);
 

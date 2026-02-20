@@ -23,5 +23,6 @@ class LoopRequest:
     starting_cash: float = 1000.0
     steps: int = 5
     write_artifacts: bool = True
+    upload_s3: bool = True  # Upload artifacts to S3 when True
     mode: str = "agentcore-loop"
     strategy_path: str = field(default=DEFAULT_STRATEGY_PATH)

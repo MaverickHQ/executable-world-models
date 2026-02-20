@@ -1,3 +1,9 @@
+## v0.8.1-fixes — S3 Artifacts + Correlation ID (P02)
+- **S3 Artifacts**: Loop now uploads trajectory/decision/deltas to S3
+- **Float Rounding**: API cash_balance shows 2 decimal places
+- **Correlation ID**: Full propagation (header → X-Ray → UUID)
+- All 117 unit tests pass
+
 ## v0.8.0 — Health, Contract Tests, Config Strategy (R3-R7, R10)
 - **R6**: Added `/health` endpoint with deterministic payload per OpenSpec
 - **R4**: Standardized API error format (code, message, details, request_id)
