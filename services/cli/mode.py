@@ -9,8 +9,11 @@ from services.cli.config import (
 )
 
 
-def show_target() -> str:
-    return resolve_target(ensure_config())
+def show_target(raw: bool = False) -> str:
+    value = resolve_target(ensure_config())
+    if raw:
+        return value
+    return f"target: {value}"
 
 
 def set_target(value: str) -> str:
@@ -23,16 +26,22 @@ def set_target(value: str) -> str:
     return value
 
 
-def show_mode() -> str:
-    return show_target()
+def show_mode(raw: bool = False) -> str:
+    value = resolve_target(ensure_config())
+    if raw:
+        return value
+    return f"mode: {value}"
 
 
 def set_mode(value: str) -> str:
     return set_target(value)
 
 
-def show_env() -> str:
-    return str(ensure_config()["env"])
+def show_env(raw: bool = False) -> str:
+    value = str(ensure_config()["env"])
+    if raw:
+        return value
+    return f"env: {value}"
 
 
 def set_env(value: str) -> str:

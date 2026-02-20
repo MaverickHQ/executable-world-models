@@ -27,3 +27,6 @@ infra/cdk/cdk-outputs.json
 
 # OS
 .DS_Store
+
+# Internal spec workflow (not public)
+openspec/
