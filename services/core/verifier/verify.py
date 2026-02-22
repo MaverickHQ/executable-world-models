@@ -33,9 +33,7 @@ def verify_transition(state: State, action: Action) -> VerificationResult:
         )
 
     if not action.symbol:
-        errors.append(
-            VerificationError(code="invalid_action", message="Symbol is required.")
-        )
+        errors.append(VerificationError(code="invalid_action", message="Symbol is required."))
 
     prices = {action.symbol: action.price}
     equity = state.equity(prices)
@@ -74,8 +72,7 @@ def verify_transition(state: State, action: Action) -> VerificationResult:
         projected_positions = dict(state.positions)
 
     projected_exposure = sum(
-        abs(qty * prices.get(symbol, 0.0))
-        for symbol, qty in projected_positions.items()
+        abs(qty * prices.get(symbol, 0.0)) for symbol, qty in projected_positions.items()
     )
     projected_equity = equity
 
@@ -107,15 +104,12 @@ def verify_transition(state: State, action: Action) -> VerificationResult:
                 )
             if (
                 projected_equity
-                and (position_value / projected_equity)
-                > state.risk_limits.max_position_pct
+                and (position_value / projected_equity) > state.risk_limits.max_position_pct
             ):
                 errors.append(
                     VerificationError(
                         code="position_concentration",
-                        message=(
-                            f"Position concentration for {symbol} exceeds limit."
-                        ),
+                        message=(f"Position concentration for {symbol} exceeds limit."),
                     )
                 )
 

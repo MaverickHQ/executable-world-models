@@ -31,9 +31,7 @@ def explain_transition(
     if not verification.errors:
         return "Rejected: transition failed verification."
 
-    error_messages = ", ".join(
-        f"{error.code}: {error.message}" for error in verification.errors
-    )
+    error_messages = ", ".join(f"{error.code}: {error.message}" for error in verification.errors)
     equity = prior_state.equity(prices)
     return (
         "Rejected: "

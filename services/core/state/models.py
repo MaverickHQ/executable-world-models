@@ -16,11 +16,13 @@ class State:
     cash_balance: float
     positions: Dict[str, float] = field(default_factory=dict)
     exposure: float = 0.0
-    risk_limits: RiskLimits = field(default_factory=lambda: RiskLimits(
-        max_leverage=1.0,
-        max_position_pct=0.5,
-        max_position_value=100_000.0,
-    ))
+    risk_limits: RiskLimits = field(
+        default_factory=lambda: RiskLimits(
+            max_leverage=1.0,
+            max_position_pct=0.5,
+            max_position_value=100_000.0,
+        )
+    )
 
     def with_positions(self, positions: Dict[str, float], prices: Dict[str, float]) -> "State":
         exposure = sum(abs(qty * prices.get(symbol, 0.0)) for symbol, qty in positions.items())
@@ -37,10 +39,7 @@ class State:
         )
 
     def exposure_value(self, prices: Dict[str, float]) -> float:
-        return sum(
-            abs(qty * prices.get(symbol, 0.0))
-            for symbol, qty in self.positions.items()
-        )
+        return sum(abs(qty * prices.get(symbol, 0.0)) for symbol, qty in self.positions.items())
 
     def to_dict(self) -> Dict[str, object]:
         return {

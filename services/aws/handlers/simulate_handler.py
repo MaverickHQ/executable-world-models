@@ -165,10 +165,7 @@ def handler(event, context):
     else:
         if "scenario" in payload:
             scenario_path = (
-                Path(__file__).resolve().parents[1]
-                / "assets"
-                / "scenarios"
-                / payload["scenario"]
+                Path(__file__).resolve().parents[1] / "assets" / "scenarios" / payload["scenario"]
             )
             scenario_payload = json.loads(scenario_path.read_text())
             actions = _actions_from_payload(scenario_payload["plan"])

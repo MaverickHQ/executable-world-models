@@ -64,7 +64,7 @@ def test_runs_latest_raw_and_json_output(monkeypatch, capsys, tmp_path) -> None:
     out_json = capsys.readouterr().out
     assert rc_json == 0
     assert out_json.strip().startswith("{")
-    assert "\n  \"approved\": true" in out_json
+    assert '\n  "approved": true' in out_json
 
 
 def test_runs_latest_default_summary_includes_final_state(monkeypatch, capsys, tmp_path) -> None:

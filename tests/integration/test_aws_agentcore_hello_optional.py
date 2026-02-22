@@ -15,4 +15,4 @@ def test_agentcore_hello_smoke():
         capture_output=True,
         text=True,
     )
-    assert "\"ok\": true" in result.stdout.lower()
+    assert '"ok": true' in result.stdout.lower()

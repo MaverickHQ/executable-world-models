@@ -16,15 +16,16 @@ from typing import Any, Dict, Optional
 @dataclass
 class APIError:
     """Standardized API error structure per OpenSpec."""
+
     code: str
     message: str
     details: Dict[str, Any] = field(default_factory=dict)
     request_id: Optional[str] = None
-    
+
     def __post_init__(self):
         if self.request_id is None:
             self.request_id = str(uuid.uuid4())
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary format for API response."""
         return {
@@ -45,13 +46,13 @@ def create_error_response(
 ) -> Dict[str, Any]:
     """
     Create a standardized error response per OpenSpec API contract.
-    
+
     Args:
         code: Error code (e.g., "invalid_request", "internal_error")
         message: Human-readable error message
         details: Additional error details (default: empty dict)
         request_id: Request tracking ID (auto-generated if not provided)
-    
+
     Returns:
         Dict with standardized error structure
     """
@@ -72,7 +73,7 @@ def create_validation_error(
     details = {}
     if field_errors:
         details["field_errors"] = field_errors
-    
+
     return create_error_response(
         code="validation_error",
         message=message,

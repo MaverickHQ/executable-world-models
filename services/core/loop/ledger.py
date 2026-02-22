@@ -12,7 +12,5 @@ def write_execution_ledger(path: Path, rows: List[ExecutionRow]) -> None:
 
 
 def write_execution_bundle(path: Path, bundles: List[ExecutionBundle]) -> None:
-    payload: Dict[str, object] = {
-        "executions": [bundle.to_dict() for bundle in bundles]
-    }
+    payload: Dict[str, object] = {"executions": [bundle.to_dict() for bundle in bundles]}
     path.write_text(json.dumps(payload, indent=2))

@@ -1,3 +1,11 @@
+## v0.8.2 — Manifest v2: runtime_budgets vs policy_limits
+- **Manifest v2 schema**: Standardized "budgets" to mean runtime loop budgets (max_steps, max_tool_calls, etc.)
+- **Separated trading/risk constraints**: Moved max_leverage, max_position_pct, max_position_value to policy_limits
+- **Backward compatibility**: Deprecated "budgets" field included as alias for runtime_budgets (one release)
+- **Request parsing**: Configs accept both legacy "budgets" and new "runtime_budgets"/"policy_limits" fields
+- **Deprecation warnings**: Legacy budgets with trading keys emit warning to stderr
+- **Error handling**: Mixed keys in legacy budgets returns structured error explaining the split
+
 ## v0.8.1-fixes — S3 Artifacts + Correlation ID (P02)
 - **S3 Artifacts**: Loop now uploads trajectory/decision/deltas to S3
 - **Float Rounding**: API cash_balance shows 2 decimal places

@@ -22,7 +22,7 @@ def _trace_id(event: dict[str, Any]) -> str:
     Priority: x-correlation-id (case-insensitive) > x-amzn-trace-id > _X_AMZN_TRACE_ID env > UUID
     """
     from uuid import uuid4
-    
+
     headers = event.get("headers") or {}
     if not isinstance(headers, dict):
         # Check all common header case variations
@@ -30,13 +30,13 @@ def _trace_id(event: dict[str, Any]) -> str:
             key_lower = key.lower()
             if key_lower == "x-correlation-id":
                 return headers[key]
-    
+
     # Check case-insensitive for x-correlation-id
     if isinstance(headers, dict):
         for key, value in headers.items():
             if key.lower() == "x-correlation-id" and value:
                 return value
-    
+
     # Fall back to x-amzn-trace-id
     if isinstance(headers, dict):
         trace_id = (
@@ -46,7 +46,7 @@ def _trace_id(event: dict[str, Any]) -> str:
         )
         if trace_id:
             return trace_id
-    
+
     # Final fallback: generate UUID
     return str(uuid4())
 
@@ -105,6 +105,9 @@ def _parse(event: dict[str, Any]) -> LoopRequest:
     budgets = body.get("budgets") or {}
     strategy_path = body.get("strategy_path")
     upload_s3 = body.get("upload_s3", True)
+    # Generate run_id at the outermost boundary for consistency
+    # This ensures run_id is the same across API response, S3 artifacts, and DynamoDB
+    run_id = str(uuid4())
     return LoopRequest(
         budgets=LoopBudgets(
             max_steps=int(budgets.get("max_steps", 5)),
@@ -121,6 +124,7 @@ def _parse(event: dict[str, Any]) -> LoopRequest:
         upload_s3=bool(upload_s3),
         mode=str(body.get("mode", "agentcore-loop")),
         strategy_path=str(strategy_path) if strategy_path else None,
+        run_id=run_id,
     )
 
 
@@ -164,7 +168,7 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     }
     # Grep-friendly log line for correlation tracking
     print(f"correlation_id={trace_id}")
-    
+
     _log_json(
         {
             "service": SERVICE,

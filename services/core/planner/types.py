@@ -14,6 +14,7 @@ class PlanStep:
     - args: dict payload
     - rationale: short explanation for observability/debugging
     """
+
     tool: str
     args: Dict[str, Any]
     rationale: str
@@ -24,8 +25,10 @@ class Plan:
     """
     A Plan is a list of PlanStep objects plus optional metadata.
     """
+
     steps: List[PlanStep]
     meta: Dict[str, Any]
+
 
 @dataclass(frozen=True)
 class PlannerError:
@@ -46,4 +49,3 @@ class PlannerResult:
     metadata: Dict[str, Any]
     error: Optional[PlannerError] = None
     rejection: Optional[PlannerRejection] = None
-

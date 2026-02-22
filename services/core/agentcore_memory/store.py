@@ -16,11 +16,9 @@ class MemoryStoreError(RuntimeError):
 
 
 class MemoryStore(Protocol):
-    def put(self, key: str, value: Dict[str, Any]) -> None:
-        ...
+    def put(self, key: str, value: Dict[str, Any]) -> None: ...
 
-    def get(self, key: str) -> Optional[Dict[str, Any]]:
-        ...
+    def get(self, key: str) -> Optional[Dict[str, Any]]: ...
 
 
 @dataclass

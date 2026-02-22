@@ -7,33 +7,29 @@ from services.core.loop.types import ExecutionRow
 
 
 def render_execution_row(row: ExecutionRow) -> str:
-    return (
-        " | ".join(
-            [
-                str(row.step_index),
-                row.symbol,
-                row.side,
-                f"{row.quantity:.2f}",
-                f"{row.price:.2f}",
-                f"{row.cash_before:.2f}",
-                f"{row.cash_after:.2f}",
-                f"{row.exposure_before:.2f}",
-                f"{row.exposure_after:.2f}",
-                _format_positions(row.positions_before),
-                _format_positions(row.positions_after),
-                row.run_id,
-                row.reason,
-            ]
-        )
+    return " | ".join(
+        [
+            str(row.step_index),
+            row.symbol,
+            row.side,
+            f"{row.quantity:.2f}",
+            f"{row.price:.2f}",
+            f"{row.cash_before:.2f}",
+            f"{row.cash_after:.2f}",
+            f"{row.exposure_before:.2f}",
+            f"{row.exposure_after:.2f}",
+            _format_positions(row.positions_before),
+            _format_positions(row.positions_after),
+            row.run_id,
+            row.reason,
+        ]
     )
 
 
 def _format_positions(positions: Dict[str, float]) -> str:
     if not positions:
         return "-"
-    parts = [
-        f"{symbol} {qty:.2f}" for symbol, qty in sorted(positions.items())
-    ]
+    parts = [f"{symbol} {qty:.2f}" for symbol, qty in sorted(positions.items())]
     return "; ".join(parts)
 
 
@@ -48,23 +44,21 @@ def render_execution_table(rows: List[ExecutionRow]) -> List[str]:
 
 
 def render_execution_event(event: ExecutionEvent) -> str:
-    return (
-        " | ".join(
-            [
-                str(event.step_index),
-                event.symbol,
-                event.side,
-                f"{event.quantity:.2f}",
-                f"{event.price:.2f}",
-                event.status,
-                f"{event.cash_before:.2f}",
-                f"{event.cash_after:.2f}",
-                f"{event.exposure_before:.2f}",
-                f"{event.exposure_after:.2f}",
-                event.event_id,
-                event.run_id,
-            ]
-        )
+    return " | ".join(
+        [
+            str(event.step_index),
+            event.symbol,
+            event.side,
+            f"{event.quantity:.2f}",
+            f"{event.price:.2f}",
+            event.status,
+            f"{event.cash_before:.2f}",
+            f"{event.cash_after:.2f}",
+            f"{event.exposure_before:.2f}",
+            f"{event.exposure_after:.2f}",
+            event.event_id,
+            event.run_id,
+        ]
     )
 
 

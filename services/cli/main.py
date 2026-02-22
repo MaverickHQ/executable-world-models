@@ -7,6 +7,7 @@ import sys
 
 from services.cli.check import run_check
 from services.cli.cost import apply_cost, set_cost_profile, show_cost
+from services.cli.experiment import experiment_run
 from services.cli.mode import set_env, set_mode, set_target, show_env, show_mode, show_target
 from services.cli.runs import runs_latest, runs_tail
 
@@ -70,6 +71,19 @@ def build_parser() -> argparse.ArgumentParser:
     runs_tail_parser = runs_sub.add_parser("tail")
     runs_tail_parser.add_argument("--n", type=int, default=10)
 
+    # Experiment subcommand
+    experiment_parser = sub.add_parser("experiment")
+    experiment_sub = experiment_parser.add_subparsers(dest="experiment_cmd", required=True)
+
+    # experiment run
+    experiment_run_parser = experiment_sub.add_parser("run")
+    experiment_run_parser.add_argument(
+        "config_path", help="Path to experiment config file (JSON or YAML)"
+    )
+    experiment_run_parser.add_argument(
+        "--target", choices=["local", "aws"], help="Execution target (overrides config)"
+    )
+
     return parser
 
 
@@ -131,6 +145,10 @@ def main(argv: list[str] | None = None) -> int:
             if args.runs_cmd == "latest":
                 return runs_latest(raw=args.raw, json_output=args.json)
             return runs_tail(args.n)
+
+        if args.command == "experiment":
+            if args.experiment_cmd == "run":
+                return experiment_run(args.config_path, target=args.target)
     except ValueError as exc:
         print(str(exc), file=sys.stderr)
         return 1

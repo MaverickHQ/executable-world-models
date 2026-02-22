@@ -8,6 +8,7 @@ from typing import Any, Dict
 from uuid import uuid4
 
 from services.core.agentcore_loop.types import DEFAULT_STRATEGY_PATH, LoopRequest
+from services.core.artifacts import serialize_manifest_from_loop_result
 from services.core.loop import run_loop
 from services.core.market.generator import generate_market_path
 from services.core.planner import LocalPlanner
@@ -54,7 +55,9 @@ def _budget_dict(req: LoopRequest) -> dict[str, int]:
 
 
 def run_agentcore_loop(req: LoopRequest) -> Dict[str, Any]:
-    run_id = str(uuid4())
+    # Use provided run_id if available, otherwise generate one
+    # This ensures consistency across API response, S3 artifacts, and local artifacts
+    run_id = req.run_id if req.run_id else str(uuid4())
 
     if req.mode != "agentcore-loop":
         return {
@@ -102,6 +105,7 @@ def run_agentcore_loop(req: LoopRequest) -> Dict[str, Any]:
         strategy=strategy,
         steps=steps,
         data_dir=data_dir,
+        run_id=run_id,
     )
 
     out: Dict[str, Any] = {
@@ -127,28 +131,29 @@ def run_agentcore_loop(req: LoopRequest) -> Dict[str, Any]:
         if artifact_bucket:
             try:
                 import boto3
+
                 s3_client = boto3.client("s3")
                 prefix = f"artifacts/{run_id}"
-                
+
                 # Build trajectory payload from tape_rows
                 trajectory_data = {
                     "run_id": run_id,
                     "trajectory": [state.to_dict() for state in result.tape_rows],
                 }
-                
+
                 # Build decision payload
                 decision_data = {
                     "run_id": run_id,
                     "approved": True,
                     "rejected_step_index": None,
                 }
-                
+
                 # Build deltas payload from execution_rows
                 deltas_data = {
                     "run_id": run_id,
                     "deltas": [row.to_dict() for row in result.execution_rows],
                 }
-                
+
                 # Upload to S3
                 s3_client.put_object(
                     Bucket=artifact_bucket,
@@ -165,6 +170,29 @@ def run_agentcore_loop(req: LoopRequest) -> Dict[str, Any]:
                     Key=f"{prefix}/deltas.json",
                     Body=json.dumps(deltas_data).encode("utf-8"),
                 )
+
+                # Build and upload manifest payload using canonical serializer.
+                # This ensures schema consistency between local and S3 artifacts.
+                runtime_budgets = _budget_dict(req)
+                # Policy limits from request (if provided), otherwise empty
+                policy_limits = {}
+                
+                manifest_data = serialize_manifest_from_loop_result(
+                    loop_result=result,
+                    run_id=run_id,
+                    mode=req.mode,
+                    strategy_path=strategy_path,
+                    runtime_budgets=runtime_budgets,
+                    policy_limits=policy_limits,
+                    correlation_id=None,  # Could be extended to accept from req
+                    artifact_s3_prefix=f"s3://{artifact_bucket}/{prefix}",
+                )
+                s3_client.put_object(
+                    Bucket=artifact_bucket,
+                    Key=f"{prefix}/manifest.json",
+                    Body=json.dumps(manifest_data, indent=2, sort_keys=True).encode("utf-8"),
+                )
+
                 out["artifact_s3_prefix"] = prefix
             except Exception as e:
                 # Log error but don't fail the request

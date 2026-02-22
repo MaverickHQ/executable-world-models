@@ -4,7 +4,7 @@ from dataclasses import replace
 from typing import Dict, List
 
 from services.core.actions import PlaceBuy
-from services.core.artifacts import ArtifactWriter
+from services.core.artifacts import ArtifactWriter, RunContext
 from services.core.broker import LocalPaperBroker, OrderRequest
 from services.core.deltas.compute import compute_state_delta
 from services.core.execution import execute_run
@@ -39,7 +39,7 @@ def _extract_symbol_reason(step_reason: str, symbol: str) -> str:
     if token not in step_reason:
         return step_reason
     start = step_reason.index(token)
-    remainder = step_reason[start + len(token):].lstrip()
+    remainder = step_reason[start + len(token) :].lstrip()
     parts = remainder.split(";")
     clause = parts[0].strip()
     if clause:
@@ -106,6 +106,7 @@ def run_loop(
     strategy: object,
     steps: int,
     data_dir: object,
+    run_id: str | None = None,
 ) -> LoopResult:
     data_dir = data_dir
     artifact_dir = data_dir / "artifacts"
@@ -181,9 +182,41 @@ def run_loop(
             policy_id=policy["policy_id"],
             policy_version=policy.get("policy_version"),
             policy_hash=policy.get("policy_hash"),
+            run_id=run_id,
         )
         run_store.save_run(simulation)
-        artifacts = artifact_writer.write(simulation)
+
+        # Create RunContext with resolved values for manifest
+        # Extract symbols from the priced actions
+        symbols = sorted(set(action.symbol for action in priced_actions))
+
+        # Resolve policy_limits from policy (trading/risk constraints)
+        policy_limits = {
+            "max_leverage": policy["risk_limits"]["max_leverage"],
+            "max_position_pct": policy["risk_limits"]["max_position_pct"],
+            "max_position_value": policy["risk_limits"]["max_position_value"],
+        }
+
+        # Runtime budgets come from the loop configuration (passed as parameter or defaults)
+        # These are the runtime loop constraints
+        runtime_budgets = {
+            "max_steps": steps,  # This run's actual step count
+            "max_tool_calls": 10,  # Default value
+            "max_model_calls": 0,  # Default for loop mode
+            "max_memory_ops": 0,
+            "max_memory_bytes": 0,
+        }
+
+        context = RunContext(
+            run_id=simulation.run_id,
+            mode="agentcore-loop",
+            strategy_path="examples/fixtures/trading_path.json",
+            runtime_budgets=runtime_budgets,
+            policy_limits=policy_limits,
+            symbols=symbols,
+        )
+
+        artifacts = artifact_writer.write(simulation, context)
 
         decision = "APPROVED" if simulation.approved else "REJECTED"
         explanation = simulation.steps[-1].explanation if simulation.steps else ""

@@ -54,6 +54,7 @@ def simulate_plan(
     policy_hash: Optional[str] = None,
     planner_name: Optional[str] = None,
     planner_metadata: Optional[Dict[str, object]] = None,
+    run_id: Optional[str] = None,
 ) -> SimulationResult:
     trajectory: List[State] = [initial_state]
     step_results: List[StepResult] = []
@@ -108,8 +109,12 @@ def simulate_plan(
 
     approved = rejected_index is None
 
+    # Use provided run_id if available, otherwise generate one
+    # This ensures consistency across the call stack
+    result_run_id = run_id if run_id else str(uuid4())
+
     return SimulationResult(
-        run_id=str(uuid4()),
+        run_id=result_run_id,
         trajectory=trajectory,
         steps=step_results,
         approved=approved,

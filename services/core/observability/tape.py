@@ -72,20 +72,18 @@ def _format_exposure(state_delta: Dict[str, object], decision: str) -> str:
 
 
 def render_tape_row(row: TapeRow) -> str:
-    return (
-        " | ".join(
-            [
-                str(row.step_index),
-                _compact_prices(row.prices),
-                _compact_signals(row.signals),
-                _compact_actions(row.actions),
-                row.decision,
-                row.why,
-                _format_exposure(row.state_delta, row.decision),
-                row.run_id,
-                row.artifact_dir,
-            ]
-        )
+    return " | ".join(
+        [
+            str(row.step_index),
+            _compact_prices(row.prices),
+            _compact_signals(row.signals),
+            _compact_actions(row.actions),
+            row.decision,
+            row.why,
+            _format_exposure(row.state_delta, row.decision),
+            row.run_id,
+            row.artifact_dir,
+        ]
     )
 
 
@@ -211,9 +209,7 @@ def write_report_md(
         lines.append("- None")
     else:
         for row in approved_rows:
-            lines.append(
-                f"- Step {row.step_index}: {row.explanation}"
-            )
+            lines.append(f"- Step {row.step_index}: {row.explanation}")
 
     lines.extend(
         [

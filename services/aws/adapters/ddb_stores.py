@@ -108,10 +108,7 @@ def _serialize_simulation(result: SimulationResult) -> Dict[str, object]:
                     "price": step.action.price,
                 },
                 "accepted": step.accepted,
-                "errors": [
-                    {"code": error.code, "message": error.message}
-                    for error in step.errors
-                ],
+                "errors": [{"code": error.code, "message": error.message} for error in step.errors],
                 "price_context": step.price_context,
                 "explanation": step.explanation,
                 "state_delta": step.state_delta,
