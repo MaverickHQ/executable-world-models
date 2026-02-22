@@ -7,7 +7,6 @@ import sys
 
 from services.cli.check import run_check
 from services.cli.cost import apply_cost, set_cost_profile, show_cost
-from services.cli.experiment import experiment_run
 from services.cli.mode import set_env, set_mode, set_target, show_env, show_mode, show_target
 from services.cli.runs import runs_latest, runs_tail
 
@@ -147,6 +146,9 @@ def main(argv: list[str] | None = None) -> int:
             return runs_tail(args.n)
 
         if args.command == "experiment":
+            # Lazy import to avoid requiring certifi for non-experiment commands
+            from services.cli.experiment import experiment_run
+
             if args.experiment_cmd == "run":
                 return experiment_run(args.config_path, target=args.target)
     except ValueError as exc:

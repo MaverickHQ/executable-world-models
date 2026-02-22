@@ -1,14 +1,18 @@
 from __future__ import annotations
 
+import os
 import subprocess
+import sys
 
 
 def _run(args: list[str], home: str) -> subprocess.CompletedProcess[str]:
+    env = os.environ.copy()
+    env["HOME"] = home
     return subprocess.run(
-        ["python3", "-m", "services.cli.main", *args],
+        [sys.executable, "-m", "services.cli.main", *args],
         text=True,
         capture_output=True,
-        env={"HOME": home},
+        env=env,
         check=False,
     )
 

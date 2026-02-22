@@ -1,3 +1,11 @@
+## v0.8.2.3
+
+- CLI lazy import for experiment command (optional deps no longer required for non-experiment commands)
+- Removed eager certifi import from experiment module
+- Subprocess CLI tests now use sys.executable
+- AWS integration tests resolve artifacts bucket via CloudFormation
+- Test suite baseline: 0 failures (224 passed, 5 skipped)
+
 ## v0.8.2.2 — Runtime budgets enforcement + AWS integration tests
 - **Runtime budgets enforcement**: `runtime_budgets.max_steps` is now enforced during loop execution
 - **Handler supports runtime_budgets**: Handler accepts canonical `runtime_budgets` input (legacy `budgets` still supported)
