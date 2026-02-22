@@ -1,3 +1,4 @@
+## v0.8.2.1 — AWS validation + deployment verification
 ## v0.8.2 — Manifest v2: runtime_budgets vs policy_limits
 - **Manifest v2 schema**: Standardized "budgets" to mean runtime loop budgets (max_steps, max_tool_calls, etc.)
 - **Separated trading/risk constraints**: Moved max_leverage, max_position_pct, max_position_value to policy_limits
