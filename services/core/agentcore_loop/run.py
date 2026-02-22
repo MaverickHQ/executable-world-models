@@ -87,7 +87,15 @@ def run_agentcore_loop(req: LoopRequest) -> Dict[str, Any]:
 
     strategy_path = req.strategy_path if req.strategy_path else DEFAULT_STRATEGY_PATH
     strategy = load_strategy(strategy_path)
-    steps = min(req.steps, len(market_path.steps))
+    
+    # Resolve runtime_budgets.max_steps for enforcement
+    # Support both legacy budgets.max_steps and new runtime_budgets.max_steps
+    runtime_budgets = _budget_dict(req)
+    effective_max_steps = runtime_budgets.get("max_steps", req.steps)
+    
+    # Enforce max_steps budget: steps must be bounded by runtime_budgets.max_steps
+    # when provided, in addition to market path length
+    steps = min(req.steps, effective_max_steps, len(market_path.steps))
 
     planner = LocalPlanner(enabled=_planner_enabled())
     plan = planner.make_plan(

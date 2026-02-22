@@ -16,56 +16,20 @@ Local tests always run.
 from __future__ import annotations
 
 import json
-import os
-from pathlib import Path
 from typing import Any, Dict, Optional
 
 import pytest
 import requests
 
-from services.aws.utils.output_loader import load_outputs
-
-# AWS profile and region from task requirements
-AWS_PROFILE = os.getenv("AWS_PROFILE", "beyond-tokens-dev")
-AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
-
-# Path to CloudFormation outputs
-AWS_OUTPUTS_PATH = os.getenv(
-    "AWS_OUTPUTS_PATH",
-    Path("infra/cdk/cdk-outputs.json"),
+from tests.integration.aws_env import (
+    get_api_url,
+    get_aws_profile,
+    get_region,
+    get_skip_reason,
 )
 
-# Environment variable for direct API URL override
-AGENTCORE_LOOP_API_URL = os.getenv("AGENTCORE_LOOP_API_URL")
-
-
-def _resolve_api_url() -> Optional[str]:
-    """
-    Resolve the AgentCore Loop API URL.
-
-    Priority:
-    1. AGENTCORE_LOOP_API_URL env var (if set)
-    2. Query CloudFormation stack outputs for BeyondTokensStack -> AgentCoreLoopApiUrl
-
-    Returns:
-        API URL string or None if not available
-    """
-    # Priority 1: Direct env var
-    if AGENTCORE_LOOP_API_URL:
-        return AGENTCORE_LOOP_API_URL
-
-    # Priority 2: Query CloudFormation
-    try:
-        outputs_path = Path(AWS_OUTPUTS_PATH)
-        if outputs_path.exists():
-            outputs = load_outputs(outputs_path)
-            url = outputs.get("AgentCoreLoopApiUrl")
-            if url:
-                return url
-    except Exception:
-        pass
-
-    return None
+AWS_PROFILE = get_aws_profile()
+AWS_REGION = get_region()
 
 
 def _make_request(
@@ -100,12 +64,7 @@ def _make_request(
 
 def _get_api_url() -> Optional[str]:
     """Get API URL, returns None if not available."""
-    url = _resolve_api_url()
-    if not url:
-        return None
-    if url.endswith("/agentcore/loop"):
-        return url
-    return f"{url}/agentcore/loop"
+    return get_api_url()
 
 
 class TestErrorEnvelopeContract:
@@ -161,7 +120,8 @@ class TestInvalidJsonBody(TestErrorEnvelopeContract):
         """Send '{' - incomplete JSON should return error envelope."""
         api_url = _get_api_url()
         if not api_url:
-            pytest.skip("AWS API URL not available")
+            skip_reason = get_skip_reason() or "AWS API URL not available"
+            pytest.skip(skip_reason)
 
         response = _make_request(
             api_url,
@@ -186,7 +146,8 @@ class TestInvalidJsonBody(TestErrorEnvelopeContract):
         """Send '{ "steps": "five" }' - wrong types in JSON."""
         api_url = _get_api_url()
         if not api_url:
-            pytest.skip("AWS API URL not available")
+            skip_reason = get_skip_reason() or "AWS API URL not available"
+            pytest.skip(skip_reason)
 
         response = _make_request(
             api_url,
@@ -208,7 +169,8 @@ class TestInvalidJsonBody(TestErrorEnvelopeContract):
         """Send empty body."""
         api_url = _get_api_url()
         if not api_url:
-            pytest.skip("AWS API URL not available")
+            skip_reason = get_skip_reason() or "AWS API URL not available"
+            pytest.skip(skip_reason)
 
         response = _make_request(
             api_url,
@@ -232,7 +194,8 @@ class TestContentTypeValidation(TestErrorEnvelopeContract):
         """Send request without Content-Type header."""
         api_url = _get_api_url()
         if not api_url:
-            pytest.skip("AWS API URL not available")
+            skip_reason = get_skip_reason() or "AWS API URL not available"
+            pytest.skip(skip_reason)
 
         response = _make_request(
             api_url,
@@ -251,7 +214,8 @@ class TestContentTypeValidation(TestErrorEnvelopeContract):
         """Send request with invalid Content-Type."""
         api_url = _get_api_url()
         if not api_url:
-            pytest.skip("AWS API URL not available")
+            skip_reason = get_skip_reason() or "AWS API URL not available"
+            pytest.skip(skip_reason)
 
         response = _make_request(
             api_url,
@@ -270,7 +234,8 @@ class TestContentTypeValidation(TestErrorEnvelopeContract):
         """Send request with XML Content-Type."""
         api_url = _get_api_url()
         if not api_url:
-            pytest.skip("AWS API URL not available")
+            skip_reason = get_skip_reason() or "AWS API URL not available"
+            pytest.skip(skip_reason)
 
         response = _make_request(
             api_url,

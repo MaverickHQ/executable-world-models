@@ -1,6 +1,6 @@
 [project]
 name = "beyond-tokens"
-version = "0.8.2"
+version = "0.8.2.2"
 requires-python = ">=3.10"
 dependencies = [
   "pydantic",

@@ -102,7 +102,9 @@ def _parse(event: dict[str, Any]) -> LoopRequest:
     else:
         body = body_raw
 
-    budgets = body.get("budgets") or {}
+    # Support both legacy "budgets" and canonical "runtime_budgets" fields
+    # Prefer runtime_budgets (v2 canonical), fall back to budgets (legacy)
+    runtime_budgets = body.get("runtime_budgets") or body.get("budgets") or {}
     strategy_path = body.get("strategy_path")
     upload_s3 = body.get("upload_s3", True)
     # Generate run_id at the outermost boundary for consistency
@@ -110,11 +112,11 @@ def _parse(event: dict[str, Any]) -> LoopRequest:
     run_id = str(uuid4())
     return LoopRequest(
         budgets=LoopBudgets(
-            max_steps=int(budgets.get("max_steps", 5)),
-            max_tool_calls=int(budgets.get("max_tool_calls", 10)),
-            max_model_calls=int(budgets.get("max_model_calls", 0)),
-            max_memory_ops=int(budgets.get("max_memory_ops", 0)),
-            max_memory_bytes=int(budgets.get("max_memory_bytes", 0)),
+            max_steps=int(runtime_budgets.get("max_steps", 5)),
+            max_tool_calls=int(runtime_budgets.get("max_tool_calls", 10)),
+            max_model_calls=int(runtime_budgets.get("max_model_calls", 0)),
+            max_memory_ops=int(runtime_budgets.get("max_memory_ops", 0)),
+            max_memory_bytes=int(runtime_budgets.get("max_memory_bytes", 0)),
         ),
         seed=int(body.get("seed", 7)),
         symbols=tuple(body.get("symbols", ["AAPL", "MSFT"])),
@@ -206,6 +208,11 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
             "final_state": result.get("final_state"),
             "artifact_dir": result.get("artifact_dir"),
             "error": result.get("error"),
+            # Canonical field: correlation_id (matches API response/logs/EMF)
+            "correlation_id": trace_id,
+            # DEPRECATED: trace_id retained for backward compatibility.
+            # Prefer correlation_id for new integrations; trace_id will be
+            # removed in a future release once consumers migrate.
             "trace_id": trace_id,
             "request_id": request_id,
         }
@@ -222,6 +229,8 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                     "message": str(exc),
                     "run_id": run_record["run_id"],
                     "request_id": request_id,
+                    "correlation_id": trace_id,
+                    # DEPRECATED: trace_id retained for backward compatibility
                     "trace_id": trace_id,
                 }
             )

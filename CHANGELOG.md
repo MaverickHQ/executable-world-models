@@ -1,4 +1,11 @@
+## v0.8.2.2 — Runtime budgets enforcement + AWS integration tests
+- **Runtime budgets enforcement**: `runtime_budgets.max_steps` is now enforced during loop execution
+- **Handler supports runtime_budgets**: Handler accepts canonical `runtime_budgets` input (legacy `budgets` still supported)
+- **DynamoDB correlation_id canonical**: Run records store `correlation_id` as canonical field, `trace_id` retained for backward compatibility
+- **AWS integration tests**: No longer requires ARTIFACT_BUCKET env var - resolves bucket via CloudFormation outputs
+
 ## v0.8.2.1 — AWS validation + deployment verification
+- **DynamoDB correlation_id**: Run records now store `correlation_id` (canonical field matching API/logs/EMF). `trace_id` retained for backward compatibility and will be deprecated in a future release.
 ## v0.8.2 — Manifest v2: runtime_budgets vs policy_limits
 - **Manifest v2 schema**: Standardized "budgets" to mean runtime loop budgets (max_steps, max_tool_calls, etc.)
 - **Separated trading/risk constraints**: Moved max_leverage, max_position_pct, max_position_value to policy_limits
