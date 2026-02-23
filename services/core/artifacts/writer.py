@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from services.core.loop.types import LoopResult
 
 # Runtime version constant - should match package version
-RUNTIME_VERSION = "0.8.2.3"
+RUNTIME_VERSION = "0.8.3"
 
 # Runtime budget keys - these belong in runtime_budgets
 RUNTIME_BUDGET_KEYS = frozenset(

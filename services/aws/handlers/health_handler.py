@@ -4,7 +4,7 @@ import os
 import uuid
 
 # Version from pyproject.toml - in production this would be imported
-API_VERSION = os.environ.get("API_VERSION", "0.8.2.3")
+API_VERSION = os.environ.get("API_VERSION", "0.8.3")
 
 
 def handler(event, context):

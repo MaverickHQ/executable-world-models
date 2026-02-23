@@ -7,6 +7,7 @@ import sys
 
 from services.cli.check import run_check
 from services.cli.cost import apply_cost, set_cost_profile, show_cost
+from services.cli.evaluate import experiment_evaluate_placeholder, run_evaluate_cmd
 from services.cli.mode import set_env, set_mode, set_target, show_env, show_mode, show_target
 from services.cli.runs import runs_latest, runs_tail
 
@@ -70,6 +71,28 @@ def build_parser() -> argparse.ArgumentParser:
     runs_tail_parser = runs_sub.add_parser("tail")
     runs_tail_parser.add_argument("--n", type=int, default=10)
 
+    # Run subcommand
+    run_parser = sub.add_parser("run")
+    run_sub = run_parser.add_subparsers(dest="run_cmd", required=True)
+
+    # run evaluate
+    run_evaluate_parser = run_sub.add_parser("evaluate")
+    run_evaluate_parser.add_argument(
+        "--artifacts-dir",
+        required=True,
+        help=(
+            "If --run-id is provided, this is the root artifacts directory containing <run-id>/. "
+            "If --run-id is omitted, this is the run artifact directory itself."
+        ),
+    )
+    run_evaluate_parser.add_argument(
+        "--run-id",
+        help="Evaluate a specific run by ID under the artifacts root directory.",
+    )
+    run_evaluate_parser.add_argument(
+        "--json", action="store_true", help="Print full evaluation JSON to stdout"
+    )
+
     # Experiment subcommand
     experiment_parser = sub.add_parser("experiment")
     experiment_sub = experiment_parser.add_subparsers(dest="experiment_cmd", required=True)
@@ -81,6 +104,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     experiment_run_parser.add_argument(
         "--target", choices=["local", "aws"], help="Execution target (overrides config)"
+    )
+
+    # experiment evaluate (R22)
+    experiment_evaluate_parser = experiment_sub.add_parser("evaluate")
+    experiment_evaluate_parser.add_argument(
+        "--experiment-dir",
+        required=True,
+        help="Path to experiment directory for evaluation.",
+    )
+    experiment_evaluate_parser.add_argument(
+        "--json", action="store_true", help="Print full evaluation JSON to stdout"
     )
 
     return parser
@@ -145,12 +179,18 @@ def main(argv: list[str] | None = None) -> int:
                 return runs_latest(raw=args.raw, json_output=args.json)
             return runs_tail(args.n)
 
+        if args.command == "run":
+            if args.run_cmd == "evaluate":
+                return run_evaluate_cmd(args)
+
         if args.command == "experiment":
             # Lazy import to avoid requiring certifi for non-experiment commands
             from services.cli.experiment import experiment_run
 
             if args.experiment_cmd == "run":
                 return experiment_run(args.config_path, target=args.target)
+            if args.experiment_cmd == "evaluate":
+                return experiment_evaluate_placeholder(args)
     except ValueError as exc:
         print(str(exc), file=sys.stderr)
         return 1

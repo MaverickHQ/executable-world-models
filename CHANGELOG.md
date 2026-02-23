@@ -1,3 +1,9 @@
+## v0.8.3
+- R21: run-level structural evaluation from artifacts (deterministic JSON, integrity error codes)
+- R22: experiment-level structural evaluation (aggregate JSON + per-run CSV)
+- CLI: `ewm run evaluate ...` and `ewm experiment evaluate ...`
+- Tests: unit suite clean (231 passed)
+
 ## v0.8.2.3
 
 - CLI lazy import for experiment command (optional deps no longer required for non-experiment commands)
