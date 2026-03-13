@@ -245,6 +245,72 @@ python3 scripts/smoke_health.py
 
 ---
 
+## Trading Environment Layer (Experimental)
+
+The Trading Environment Layer introduces a **stateful world interface for replaying market paths** — a deterministic, lightweight environment layer that bridges experiments to future environment-based work.
+
+### What It Is
+
+- **Deterministic replay-based environment**: Agents step through a fixed sequence of market observations
+- **Stateful world interface**: Maintains positions, cash balance, and action history across steps
+- **Lightweight**: Returns plain dicts, no external library types
+- **Bridge toward future work**: Foundation for Essay 8 ("Agents Need Worlds")
+
+### What It Is NOT
+
+- **NOT a market simulator**: No order matching, no trade execution
+- **NOT a broker**: No slippage modeling, no PnL computation
+- **NOT RL training**: No reward optimization
+- **NOT a world model**: No predictive modeling
+
+Actions may be recorded/echoed but are **NOT financially executed**. No PnL is computed, no orders are matched, no rewards are calculated.
+
+### Components
+
+- **BaseEnvironment**: Abstract interface defining `reset()`, `state()`, and `step()` methods
+- **MarketPathEnvironment**: Primary implementation (preferred name)
+- **TradingEnvironment**: Alias for MarketPathEnvironment (backwards compatible)
+
+### Design Principles
+
+- **Deterministic**: Same inputs always produce same outputs
+- **Replay-based**: Agents step through a fixed sequence of market observations
+- **Inspectable**: All state transitions are visible and logged
+- **Optional**: Does not affect existing runtime/evaluation stack
+
+### Example Usage
+
+```python
+from services.core.environment import MarketPathEnvironment
+
+# Define a simple market path
+market_path = [
+    {"AAPL": 100.0, "MSFT": 200.0},
+    {"AAPL": 101.0, "MSFT": 201.0},
+    {"AAPL": 102.0, "MSFT": 202.0},
+]
+
+# Create environment
+env = MarketPathEnvironment(market_path=market_path, initial_cash=10_000.0)
+
+# Reset to initial state
+state = env.reset()
+
+# Step through the environment
+result = env.step({"type": "hold"})
+result = env.step({"type": "buy", "symbol": "AAPL", "qty": 10})
+```
+
+Or run the demo script:
+
+```bash
+python3 scripts/demo_trading_environment.py
+```
+
+This layer provides foundational support for future environment-based experiments, planning with environmental feedback, and multi-step agent interactions.
+
+---
+
 Versioning
 
 v0.7.0-base → AgentCore baseline (no model calls)
