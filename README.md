@@ -1,370 +1,221 @@
-Executable World Models
+# Executable World Models
 
-Executable World Models (EWM) is a research framework for building deterministic, stateful planning systems that run locally or on AWS under strict cost and safety constraints.
+Executable World Models (EWM) is a research framework for building deterministic experimental systems around intelligent agents.
 
-This project is not about trading performance.
-It is about verifiable state transitions under explicit control.
+The goal of the project is NOT trading performance and NOT agent automation.
 
-The core question is simple:
+The goal is architectural:
 
-Can we build agent systems that are reproducible, inspectable, and cost-bounded — without hidden loops or runaway behavior?
+to make intelligent behavior reproducible, inspectable, and experimentally verifiable.
 
-⸻
+Most agent systems generate outputs.
 
-Why This Exists
+EWM generates trajectories.
 
-Many modern agent systems obscure state transitions, blur reasoning and execution, and make cost behavior unpredictable.
+A trajectory is the sequence of observations, decisions, and state transitions that occur while an agent interacts with an environment.
 
-EWM takes the opposite approach.
+Once trajectories exist, they can be validated, aggregated into experiments, and used as inputs to learning systems.
 
-Every transition is deterministic.
-Every action is logged.
-Every execution is budget-constrained.
-Nothing runs implicitly.
+------------------------------------------------------------
 
-This repository demonstrates how to construct such systems from first principles.
+# Why This Architecture Exists
 
-⸻
+Modern agent systems are powerful but opaque.
 
-EWM treats agent systems as experiments rather than demonstrations. Each execution produces a structured artifact record, which can be evaluated deterministically and aggregated across runs. This enables reproducible experimentation under explicit cost and safety constraints.
+Agents can call tools, execute code, retrieve data, and orchestrate workflows. However, most systems still lack the structure required to study behavior.
 
-⸻
+Typical problems include:
 
-Design Principles
+- Non-reproducible executions
+- Logs without structural guarantees
+- Experiments that cannot be compared reliably
+- Learning systems that lack clean trajectory data
 
-Determinism
-The market path is fixed. Strategies operate on a known sequence. Given the same seed and inputs, results are reproducible.
+Executable World Models addresses this by enforcing:
 
-Explicit State
-All actions produce a trade tape, execution ledger, and final state snapshot. Nothing is hidden inside the runtime.
+- deterministic execution
+- explicit artifact generation
+- structural evaluation
+- experiment aggregation
+- environment interaction
+- learning-ready trajectory export
 
-Hard Budget Boundaries
-Every execution is constrained by explicit budget dimensions such as steps, tool calls, model calls, and memory operations. When a budget is exceeded, execution stops immediately.
+Together these layers form the architecture required to study intelligent systems.
 
-No Implicit Scaling
-There are no background loops, recursive invocations, or automatic retries. AWS Lambda reserved concurrency is set deliberately to prevent uncontrolled parallelism.
+------------------------------------------------------------
 
-⸻
+# Core Idea: Trajectories, Not Outputs
 
-Architecture
+Traditional agent frameworks return responses.
 
-EWM can run entirely locally or via AWS AgentCore.
+EWM records trajectories.
 
-Local Runtime
+Responses answer questions.
 
-The local runtime includes:
-	•	Deterministic market simulator
-	•	JSON strategy specification (BUY / SELL / HOLD)
-	•	State transition engine
-	•	Tape and execution logs
-	•	Replay tooling
+Trajectories explain behavior.
 
-This provides full transparency and reproducibility.
+Trajectories allow systems to:
 
-AWS Runtime (AgentCore)
+- replay decisions
+- compare strategies across experiments
+- generate structured learning datasets
+- study how agents interact with environments
 
-The AWS deployment layers the same deterministic logic behind:
-	•	Lambda handlers (Base, Tools, Memory, Loop)
-	•	HTTP API Gateway
-	•	S3 artifact storage
-	•	Optional DynamoDB state persistence
-	•	Strict budget enforcement
+This architectural shift is the foundation of the project.
 
-The goal is not scale.
-The goal is control.
+------------------------------------------------------------
 
-The architecture follows a layered approach: tokens → models → agents → constraints → artifacts → evaluation → experiments → environments. The upper layers generate intelligent behavior, while the lower layers ensure that behavior is reproducible, inspectable, and experimentally valid. See docs/architecture.md for the full diagram.
+# System Architecture
 
-⸻
+The system is organized as a layered experimental architecture:
 
-Cost & Safety Guardrails
+tokens
+↓
+models
+↓
+agents
+↓
+constraints
+↓
+artifacts
+↓
+evaluation
+↓
+experiments
+↓
+environments
+↓
+learning
 
-Every invocation must provide explicit budgets, for example:
-```
-{
-  "max_steps": 1,
-  "max_tool_calls": 0,
-  "max_model_calls": 0,
-  "max_memory_ops": 0,
-  "max_memory_bytes": 0
-}
-```
-If any budget is exceeded:
+Each layer contributes a specific capability:
 
-Execution halts immediately.
-The response returns ok=false.
-No additional work is performed.
+Layer | Role
+Agents | Execute decision logic
+Constraints | Enforce runtime safety limits
+Artifacts | Record decision trajectories
+Evaluation | Verify structural correctness
+Experiments | Aggregate trajectories
+Environments | Provide world interaction
+Learning | Consume trajectories as datasets
 
-This system is designed to fail safely, not continue optimistically.
+------------------------------------------------------------
 
-If you encounter budget_exceeded, inspect which limiter triggered and adjust only that specific dimension. Do not weaken unrelated guardrails.
+# Learning Loop (v0.8.4)
 
-⸻
+Version v0.8.4 introduces a minimal learning-loop scaffold.
 
-Local Development
+Validated trajectories can now be exported as learning-ready datasets and consumed by a learning layer.
 
-Install dependencies and run tests:
-```
+The architectural loop becomes:
+
+environment → trajectories → artifacts → evaluation → experiments → dataset → learner
+
+The learner included in this release is intentionally minimal.
+
+It demonstrates how learning systems can consume trajectory datasets without introducing reinforcement learning or policy training.
+
+------------------------------------------------------------
+
+# Trading Environment Example
+
+The reference environment used in this repository is a deterministic market-path replay.
+
+The environment provides agents with sequential market observations and records the resulting actions.
+
+This domain is useful because it produces structured decision sequences that resemble real-world planning problems.
+
+Example demo:
+
+python3 scripts/demo_learning_loop.py
+
+Example output:
+
+STEP 1: Select Learning Runs
+Selected 2 runs
+
+STEP 2: Export Learning Dataset
+Rows exported: 8
+
+STEP 3: Run Stub Learner
+Total runs: 2
+Total steps: 8
+
+------------------------------------------------------------
+
+# Local Development
+
+Setup:
+
 make setup
 make lint
-make test
-```
+pytest
 
-Install dependencies and run tests:
-```
-make demo-local-loop
-```
+Run demo:
 
-Replay the trade tape:
-```
-python3 scripts/replay_tape.py --tape tmp/demo_local_loop/tape.json
-```
-
-Replay executions:
-```
-python3 scripts/replay_executions.py --executions tmp/demo_local_loop/executions.json
-```
-
-AWS Deployment
-
-Deploy AgentCore Base:
-```
-AWS_PROFILE=beyond-tokens-dev AWS_REGION=us-east-1 make deploy-agentcore-base
-```
-
-Deploy AgentCore Tools:
-```
-AWS_PROFILE=beyond-tokens-dev AWS_REGION=us-east-1 make deploy-agentcore-tools
-```
-
-Deploy AgentCore Memory (optional, cost-safe):
-```
-export ENABLE_AGENTCORE_MEMORY=1
-export MEMORY_MAX_OPS=1
-export MEMORY_MAX_BYTES=512
-AWS_PROFILE=beyond-tokens-dev AWS_REGION=us-east-1 make deploy-agentcore-memory
-```
-
-If your machine encounters TLS issues during smoke tests, set:
-```
-export REQUESTS_CA_BUNDLE="$(python3 -c 'import certifi; print(certifi.where())')"
-```
-CLI (ewm)
-
-The ewm CLI provides operational control over runtime, cost guardrails, and run inspection.
-
-Install in editable mode:
-```
-pip install -e .
-```
-
-Check configuration health:
-```
-ewm check
-```
-
-Show current runtime target:
-```
-ewm target show
-```
-
-Set runtime target:
-```
-ewm target set local
-ewm target set aws
-ewm target set both
-```
-
-Show or modify cost guardrails:
-```
-ewm cost show
-ewm cost set --profile integration
-ewm cost apply
-```
-
-Inspect recent runs:
-```
-ewm runs latest
-ewm runs tail --n 10
-```
-
-Production safety requirements:
-	•	The prod profile requires explicit confirmation (--yes)
-	•	AWS targets require AWS_PROFILE and AWS_REGION
-	•	Budgets must be non-negative integers
-
-The CLI is designed to control execution, not bypass safeguards.
-
-⸻
-
-## API Endpoints
-
-### Health Check
-The `/health` endpoint provides a deterministic health status:
-```json
-{
-  "status": "ok",
-  "version": "0.8.0"
-}
-```
-
-### Error Response Format
-All API errors follow a standardized format per OpenSpec:
-```json
-{
-  "error": {
-    "code": "string",
-    "message": "string",
-    "details": {},
-    "request_id": "string"
-  }
-}
-```
-
-## Configuration
-
-### Strategy Path
-The loop strategy path is configurable via the `strategy_path` field in requests:
-```json
-{
-  "strategy_path": "examples/strategies/threshold_demo.json"
-}
-```
-Defaults to `examples/strategies/threshold_demo.json` if not specified.
-
-## Testing
-
-Run all tests:
-```bash
-pytest tests/ -q
-```
-
-Run contract tests:
-```bash
-pytest tests/contract/ -q
-```
-
-Run smoke test:
-```bash
-python3 scripts/smoke_health.py
-```
-
----
-
-## MarketPathEnvironment Layer (Experimental)
-
-The MarketPathEnvironment layer provides a **stateful world interface for replaying market paths**. This environment is not a market simulator. It replays deterministic market paths to provide a stateful world interface for agents, bridging experiments to future environment-based work.
-
-### What It Is
-
-- **Deterministic replay-based environment**: Agents step through a fixed sequence of market observations
-- **Stateful world interface**: Maintains positions, cash balance, and action history across steps
-- **Lightweight**: Returns plain dicts, no external library types
-- **Bridge toward future work**: Foundation for Essay 8 ("Agents Need Worlds")
-
-### What It Is NOT
-
-- **NOT a market simulator**: No order matching, no trade execution
-- **NOT a broker**: No slippage modeling, no PnL computation
-- **NOT RL training**: No reward optimization
-- **NOT a world model**: No predictive modeling
-
-Actions may be recorded/echoed but are **NOT financially executed**. No PnL is computed, no orders are matched, no rewards are calculated.
-
-### Components
-
-- **BaseEnvironment**: Abstract interface defining `reset()`, `state()`, and `step()` methods
-- **MarketPathEnvironment**: Primary implementation (preferred name)
-- **TradingEnvironment**: Alias for MarketPathEnvironment (backwards compatible)
-
-### Design Principles
-
-- **Deterministic**: Same inputs always produce same outputs
-- **Replay-based**: Agents step through a fixed sequence of market observations
-- **Inspectable**: All state transitions are visible and logged
-- **Optional**: Does not affect existing runtime/evaluation stack
-
-### Example Usage
-
-```python
-from services.core.environment import MarketPathEnvironment
-
-# Define a simple market path
-market_path = [
-    {"AAPL": 100.0, "MSFT": 200.0},
-    {"AAPL": 101.0, "MSFT": 201.0},
-    {"AAPL": 102.0, "MSFT": 202.0},
-]
-
-# Create environment
-env = MarketPathEnvironment(market_path=market_path, initial_cash=10_000.0)
-
-# Reset to initial state
-state = env.reset()
-
-# Step through the environment
-result = env.step({"type": "hold"})
-result = env.step({"type": "buy", "symbol": "AAPL", "qty": 10})
-```
-
-Or run the demo script:
-
-```bash
-python3 scripts/demo_trading_environment.py
-```
-
-This layer provides foundational support for future environment-based experiments, planning with environmental feedback, and multi-step agent interactions.
-
----
-
-Versioning
-
-v0.7.0-base → AgentCore baseline (no model calls)
-v0.7.1-tools → Tool calling + budget enforcement
-v0.7.2-memory → Optional memory path
-v0.7.6-planner → Local planner integration
-v0.7.7-cli → Operational CLI controls
-v0.8.0 → Health endpoint, contract tests, config strategy, structured logging
-v0.8.1 → Evaluation infrastructure
-v0.8.2 → AWS runtime validation
-v0.8.3 → Structural evaluation + experiment aggregation
-v0.8.4 → Learning loop scaffold (trajectory export + learner stub)
-
----
-
-## Learning Loop Scaffold (Experimental)
-
-v0.8.4 introduces a minimal, deterministic learning-ready trajectory export pipeline. This is NOT RL training - it's a scaffold that proves the architecture can close the loop from experiments to learning inputs (Essay 10).
-
-### What It Provides
-
-- **Selector**: Selects structurally valid runs (manifest_valid=True, no integrity_errors)
-- **Dataset Export**: Converts validated trajectories to JSONL format
-- **Replay**: Iterates over exported datasets deterministically
-- **Stub Learner**: Computes aggregate statistics from trajectories
-
-### Example Commands
-
-Export a learning dataset from an experiment:
-```bash
-python3 scripts/export_learning_dataset.py --experiment-dir tmp/test_plot_experiment --output outputs/learning/trajectories.jsonl
-```
-
-Run the stub learner on a dataset:
-```bash
-python3 scripts/run_learning_stub.py --dataset outputs/learning/trajectories.jsonl --output outputs/learning/report.json
-```
-
-Run the full demo:
-```bash
 python3 scripts/demo_learning_loop.py
-```
 
-### Design Principles
+------------------------------------------------------------
 
-- **Deterministic**: All outputs are stable and reproducible
-- **Trading-Focused**: Uses the trading/market-path example consistently
-- **Minimal**: No heavy ML dependencies (no torch, tensorflow, ray)
-- **Backward-Compatible**: No changes to existing runtime semantics
-- **Essay 10 Aligned**: Only trusted experimental evidence enters the learning loop
+# AWS Deployment
 
+Deploy the runtime:
+
+make deploy-agentcore-loop
+
+Verify health:
+
+/health
+
+Run integration tests:
+
+pytest tests/integration
+
+------------------------------------------------------------
+
+# Repository Structure
+
+services/core/environment/   world environments
+services/core/eval/          structural evaluation
+services/core/learning/      learning scaffold
+services/cli/                operational CLI
+
+scripts/                     demos and tools
+tests/                       unit and integration tests
+docs/                        architecture documentation
+
+------------------------------------------------------------
+
+# Essay Series
+
+This repository accompanies the research essay series:
+
+1. Agents Can Plan
+2. Evaluation is a Primitive, Not a Report
+3. Agents Need Worlds
+4. The Architecture of Intelligent Systems
+5. Closing the Learning Loop
+
+Essays are published on Substack.
+
+------------------------------------------------------------
+
+# Project Status
+
+Current milestone:
+
+v0.8.4 — Learning-ready experimental architecture
+
+The system now supports:
+
+- deterministic agent execution
+- trajectory artifacts
+- structural evaluation
+- experiment aggregation
+- environment interaction
+- learning-ready dataset export
+
+Future work may explore:
+
+- world model learning
+- policy optimization
+- experiment-driven agent improvement
