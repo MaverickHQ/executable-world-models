@@ -18,7 +18,6 @@ import pytest
 
 from services.core.environment import MarketPathEnvironment, TradingEnvironment
 
-
 # Test fixtures
 SIMPLE_PATH = [
     {"AAPL": 100.0, "MSFT": 200.0},

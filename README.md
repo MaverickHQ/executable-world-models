@@ -26,6 +26,10 @@ This repository demonstrates how to construct such systems from first principles
 
 ⸻
 
+EWM treats agent systems as experiments rather than demonstrations. Each execution produces a structured artifact record, which can be evaluated deterministically and aggregated across runs. This enables reproducible experimentation under explicit cost and safety constraints.
+
+⸻
+
 Design Principles
 
 Determinism
@@ -68,6 +72,8 @@ The AWS deployment layers the same deterministic logic behind:
 
 The goal is not scale.
 The goal is control.
+
+The architecture follows a layered approach: tokens → models → agents → constraints → artifacts → evaluation → experiments → environments. The upper layers generate intelligent behavior, while the lower layers ensure that behavior is reproducible, inspectable, and experimentally valid. See docs/architecture.md for the full diagram.
 
 ⸻
 
@@ -245,9 +251,9 @@ python3 scripts/smoke_health.py
 
 ---
 
-## Trading Environment Layer (Experimental)
+## MarketPathEnvironment Layer (Experimental)
 
-The Trading Environment Layer introduces a **stateful world interface for replaying market paths** — a deterministic, lightweight environment layer that bridges experiments to future environment-based work.
+The MarketPathEnvironment layer provides a **stateful world interface for replaying market paths**. This environment is not a market simulator. It replays deterministic market paths to provide a stateful world interface for agents, bridging experiments to future environment-based work.
 
 ### What It Is
 
@@ -319,4 +325,7 @@ v0.7.2-memory → Optional memory path
 v0.7.6-planner → Local planner integration
 v0.7.7-cli → Operational CLI controls
 v0.8.0 → Health endpoint, contract tests, config strategy, structured logging
+v0.8.1 → Evaluation infrastructure
+v0.8.2 → AWS runtime validation
+v0.8.3 → Structural evaluation + experiment aggregation
 

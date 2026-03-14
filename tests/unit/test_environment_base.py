@@ -6,6 +6,7 @@ concrete implementations can be created.
 """
 
 import pytest
+
 from services.core.environment import BaseEnvironment
 
 
