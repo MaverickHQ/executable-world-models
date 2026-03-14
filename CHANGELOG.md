@@ -1,3 +1,22 @@
+## v0.8.5 — Evidence Policy Feedback Loop
+- **Deterministic learning-loop scaffold completed**: The architecture now closes the loop from experiments to decisions
+- **Evidence policy added**: New `services.core.policy` module with evidence-based decision support
+- **Policy builder**: Converts learning reports into deterministic evidence policies
+- **Policy applicator**: Applies evidence-based preferences to trading decisions
+- **Commands**: 
+  - `python3 scripts/build_evidence_policy.py` - Build policy from learning report
+  - `python3 scripts/demo_policy_feedback_loop.py` - Demonstrate policy-guided decisions
+- **Tests**: New unit tests for evidence_policy and policy_feedback_loop
+- **This is NOT RL training**: Deterministic policy-feedback scaffold, no model weights, no gradient descent
+- All tests pass (lint + pytest)
+
+## v0.8.4 — Learning Loop Scaffold
+- **Learning dataset export**: Validated trajectories exported as JSONL for learning
+- **Stub learner**: Computes aggregate statistics from trajectory datasets
+- **Demo**: `python3 scripts/demo_learning_loop.py` demonstrates the learning loop
+- **Tests**: Unit tests for selector, dataset_export, replay, stub_learner
+- All tests pass
+
 ## v0.8.3
 - R21: run-level structural evaluation from artifacts (deterministic JSON, integrity error codes)
 - R22: experiment-level structural evaluation (aggregate JSON + per-run CSV)

@@ -7,7 +7,7 @@ Executable World Models (EWM) is a research framework for building deterministic
 The architecture follows a layered approach where each layer builds on the previous one:
 
 ```
-Tokens → Models → Agents → Constraints → Artifacts → Evaluation → Experiments → Environments → Learning
+Tokens → Models → Agents → Constraints → Artifacts → Evaluation → Experiments → Environments → Learning → Policy Feedback
 ```
 
 ## Stack Layers
@@ -238,3 +238,64 @@ Experiments → Selector → Dataset Export → Learning Dataset → Stub Learne
 - **Backward-Compatible**: No changes to existing runtime semantics
 - **Minimal**: No heavy ML dependencies
 - **Essay 10 Aligned**: Only trusted experimental evidence enters the learning loop
+
+## Policy Feedback Layer (NEW - v0.8.5)
+
+The **Policy Feedback Layer** completes the learning loop by converting experiment evidence into a deterministic policy that can influence future trading decisions.
+
+### What It Is
+- A deterministic policy builder from learning reports
+- A decision helper that applies evidence-based preferences
+- A complete learning loop: experiments → evidence → policy → decisions
+- Architecture proof that Essay 10's loop is closed
+
+### What It Is NOT
+- RL training with reward optimization
+- Policy gradient learning
+- Model weight training
+- Stochastic decision making
+
+### Architecture Position
+
+The policy feedback layer completes the loop:
+
+```
+Experiments → Trajectories → Artifacts → Evaluation → Experiments 
+                                              ↓
+                           Evidence Dataset → Learning Report → Evidence Policy
+                                                                 ↓
+                                              Future Decisions ← Policy Consultation
+```
+
+### Components
+
+1. **Evidence Policy**: JSON structure containing action preferences by symbol and step
+2. **Policy Builder**: Converts learning reports to evidence policies
+3. **Policy Applicator**: Applies policy to observations to produce decisions
+
+### Decision Logic
+
+The policy applicator uses simple deterministic rules:
+1. If symbol has a known preference, use that action
+2. Else if step position has a known preference, use that action
+3. Else fall back to default_action (typically "hold")
+
+### Design Principles
+
+- **Determinism**: Same observation + same policy = same decision
+- **Simplicity**: Plain dict-based implementation, no ML frameworks
+- **Transparency**: Easy to understand what action was chosen and why
+- **Backward-Compatible**: Can be used as optional enhancement, not required
+- **Essay 10 Aligned**: Closes the architectural loop from experiments to decisions
+
+## From Experiments to Decisions
+
+The complete learning loop now works as follows:
+
+1. **Run Experiments**: Execute agent experiments with market environments
+2. **Collect Evidence**: Validate trajectories and aggregate into experiment datasets
+3. **Analyze Evidence**: Run learner stub to produce learning report with heuristics
+4. **Build Policy**: Convert learning report to evidence policy with action preferences
+5. **Apply Policy**: Consult evidence policy when making new trading decisions
+
+This loop demonstrates that validated experiment trajectories can meaningfully influence future behavior - without requiring RL training or heavy ML infrastructure.

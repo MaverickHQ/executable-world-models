@@ -100,19 +100,55 @@ Learning | Consume trajectories as datasets
 
 ------------------------------------------------------------
 
-# Learning Loop (v0.8.4)
+# Evidence Policy Feedback (v0.8.5)
 
-Version v0.8.4 introduces a minimal learning-loop scaffold.
+Version v0.8.5 completes the learning loop with deterministic policy feedback.
 
-Validated trajectories can now be exported as learning-ready datasets and consumed by a learning layer.
+The architectural loop is now:
 
-The architectural loop becomes:
+environment → trajectories → artifacts → evaluation → experiments → evidence dataset → policy update → better decisions
 
-environment → trajectories → artifacts → evaluation → experiments → dataset → learner
+Key concepts:
 
-The learner included in this release is intentionally minimal.
+- **experiments** produce evidence (validated trajectories)
+- **evidence** is analyzed by the learner stub to produce a learning report
+- **policy** is built from the report, capturing action preferences by symbol and step
+- **decisions** can consult the evidence policy to influence future actions
 
-It demonstrates how learning systems can consume trajectory datasets without introducing reinforcement learning or policy training.
+This is NOT reinforcement learning:
+
+- No model weights are learned
+- No gradient descent occurs
+- No exploration/exploitation tradeoff
+- Simply: past experiment evidence influences future decisions
+
+Commands:
+
+```bash
+# Export learning dataset
+python3 scripts/export_learning_dataset.py
+
+# Run learner stub
+python3 scripts/run_learning_stub.py
+
+# Build evidence policy
+python3 scripts/build_evidence_policy.py \
+  --learning-report outputs/learning/demo_learning_report.json \
+  --output outputs/learning/evidence_policy.json
+
+# Run policy feedback demo
+python3 scripts/demo_policy_feedback_loop.py
+```
+
+The evidence policy file is a simple JSON structure containing:
+- default_action: The most common action across experiments
+- action_preferences_by_symbol: Most common action for each trading symbol
+- action_preferences_by_step: Most common action at each step position
+
+Example demo:
+
+python3 scripts/demo_policy_feedback_loop.py
+
 
 ------------------------------------------------------------
 
@@ -203,7 +239,7 @@ Essays are published on Substack.
 
 Current milestone:
 
-v0.8.4 — Learning-ready experimental architecture
+v0.8.5 — Evidence Policy Feedback Loop
 
 The system now supports:
 
@@ -213,9 +249,8 @@ The system now supports:
 - experiment aggregation
 - environment interaction
 - learning-ready dataset export
+- deterministic policy feedback from experiment evidence
 
-Future work may explore:
+The learning loop is now complete: experiments produce evidence, evidence influences future decisions.
 
-- world model learning
-- policy optimization
-- experiment-driven agent improvement
+This is NOT reinforcement learning - it's a deterministic policy-feedback scaffold.
