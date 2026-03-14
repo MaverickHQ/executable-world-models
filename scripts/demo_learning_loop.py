@@ -127,11 +127,11 @@ def main():
     print("=" * 60)
     print()
     
-    # Try to use existing experiment data, or create fixture
-    existing_experiment = Path("tmp/test_plot_experiment")
-    if existing_experiment.exists() and (existing_experiment / "evaluation_summary.json").exists():
-        experiment_dir = existing_experiment
-        print(f"Using existing experiment: {experiment_dir}")
+    # Use the fixture experiment for demo (contains real trajectory data)
+    fixture_experiment = Path("tests/fixtures/learning_experiment")
+    if fixture_experiment.exists() and (fixture_experiment / "evaluation_summary.json").exists():
+        experiment_dir = fixture_experiment
+        print(f"Using fixture experiment: {experiment_dir}")
     else:
         print("Creating demo experiment fixtures...")
         tmp_dir = Path(tempfile.mkdtemp())
