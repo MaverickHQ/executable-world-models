@@ -1,0 +1,17 @@
+{
+  "_metadata": {
+    "dataset_path": "outputs/learning/demo_trajectories.jsonl",
+    "output_path": "outputs/learning/demo_learning_report.json"
+  },
+  "action_counts": {},
+  "action_proportions": {},
+  "average_steps_per_run": 0.0,
+  "heuristics": {},
+  "integrity_summary": {
+    "invalid_rows": 0,
+    "valid_rows": 0
+  },
+  "symbol_counts": {},
+  "total_runs": 0,
+  "total_steps": 0
+}

@@ -7,7 +7,7 @@ Executable World Models (EWM) is a research framework for building deterministic
 The architecture follows a layered approach where each layer builds on the previous one:
 
 ```
-Tokens → Models → Agents → Constraints → Artifacts → Evaluation → Experiments → Environments
+Tokens → Models → Agents → Constraints → Artifacts → Evaluation → Experiments → Environments → Learning
 ```
 
 ## Stack Layers
@@ -196,3 +196,45 @@ The `examples/fixtures/trading_environment_path.json` fixture defines a determin
 | `steps[].volume` | integer (optional) | Trading volume at this step |
 
 The `steps` array represents the sequential market observations that `MarketPathEnvironment` will replay. Each step maps symbol strings to float prices. Additional metadata fields (timestamp, volume) are optional and ignored by the environment but available for downstream processing.
+
+## Learning Loop Scaffold (Experimental)
+
+The **Learning Loop Scaffold** provides infrastructure for consuming validated experiment trajectories as inputs for future adaptation. This is NOT RL training - it's a deterministic scaffold that proves the architecture can close the loop from experiments to learning.
+
+### What It Is
+- A deterministic trajectory export pipeline
+- A selector for structurally valid runs
+- A replay/iteration interface for trajectory datasets
+- A stub learner that computes aggregate statistics
+- Architecture proof-of-concept for Essay 10
+
+### What It Is NOT
+- RL training with reward optimization
+- Policy-gradient learning
+- A broker simulator
+- Heavy ML framework dependent (no torch, tensorflow, ray)
+
+### Architecture Position
+
+The learning layer sits at the top of the stack, consuming validated trajectories from experiments:
+
+```
+Experiments → Selector → Dataset Export → Learning Dataset → Stub Learner → Learning Report
+                                    ↓
+                              JSONL Format
+```
+
+### Components
+
+1. **Selector**: Selects structurally valid runs (manifest_valid=True, no integrity_errors)
+2. **Dataset Export**: Converts trajectories to JSONL with one row per step
+3. **Replay**: Iterates over exported datasets deterministically
+4. **Stub Learner**: Computes aggregate statistics (action counts, symbol counts, heuristics)
+
+### Design Principles
+
+- **Determinism**: All outputs are deterministic (stable ordering, no randomness)
+- **Trading-Focused**: Uses the trading/market-path example consistently
+- **Backward-Compatible**: No changes to existing runtime semantics
+- **Minimal**: No heavy ML dependencies
+- **Essay 10 Aligned**: Only trusted experimental evidence enters the learning loop

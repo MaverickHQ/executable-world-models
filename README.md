@@ -328,4 +328,43 @@ v0.8.0 → Health endpoint, contract tests, config strategy, structured logging
 v0.8.1 → Evaluation infrastructure
 v0.8.2 → AWS runtime validation
 v0.8.3 → Structural evaluation + experiment aggregation
+v0.8.4 → Learning loop scaffold (trajectory export + learner stub)
+
+---
+
+## Learning Loop Scaffold (Experimental)
+
+v0.8.4 introduces a minimal, deterministic learning-ready trajectory export pipeline. This is NOT RL training - it's a scaffold that proves the architecture can close the loop from experiments to learning inputs (Essay 10).
+
+### What It Provides
+
+- **Selector**: Selects structurally valid runs (manifest_valid=True, no integrity_errors)
+- **Dataset Export**: Converts validated trajectories to JSONL format
+- **Replay**: Iterates over exported datasets deterministically
+- **Stub Learner**: Computes aggregate statistics from trajectories
+
+### Example Commands
+
+Export a learning dataset from an experiment:
+```bash
+python3 scripts/export_learning_dataset.py --experiment-dir tmp/test_plot_experiment --output outputs/learning/trajectories.jsonl
+```
+
+Run the stub learner on a dataset:
+```bash
+python3 scripts/run_learning_stub.py --dataset outputs/learning/trajectories.jsonl --output outputs/learning/report.json
+```
+
+Run the full demo:
+```bash
+python3 scripts/demo_learning_loop.py
+```
+
+### Design Principles
+
+- **Deterministic**: All outputs are stable and reproducible
+- **Trading-Focused**: Uses the trading/market-path example consistently
+- **Minimal**: No heavy ML dependencies (no torch, tensorflow, ray)
+- **Backward-Compatible**: No changes to existing runtime semantics
+- **Essay 10 Aligned**: Only trusted experimental evidence enters the learning loop
 
