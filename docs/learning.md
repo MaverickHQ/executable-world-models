@@ -58,6 +58,7 @@ Each line in the exported dataset is a JSON object:
 ```
 
 Fields:
+
 - `run_id`: Unique run identifier
 - `step_index`: Position in trajectory
 - `observation`: Environment observation at step
@@ -86,6 +87,7 @@ run_stub_learner(dataset_path, report_path)
 ```
 
 The stub learner computes:
+
 - Total runs and steps
 - Average steps per run
 - Action type counts (hold, buy, sell)
@@ -182,8 +184,9 @@ decision = apply_evidence_policy(observation, policy)
 ### Decision Logic
 
 The policy applicator uses simple deterministic rules:
+
 1. If symbol has a known preference, use that action
-2. Else if step position has a known preference, use that action  
+2. Else if step position has a known preference, use that action
 3. Else fall back to default_action (typically "hold")
 
 ### Usage

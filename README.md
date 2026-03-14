@@ -6,7 +6,7 @@ The goal of the project is NOT trading performance and NOT agent automation.
 
 The goal is architectural:
 
-to make intelligent behavior reproducible, inspectable, and experimentally verifiable.
+> to make intelligent behavior reproducible, inspectable, and experimentally verifiable.
 
 Most agent systems generate outputs.
 
@@ -16,7 +16,7 @@ A trajectory is the sequence of observations, decisions, and state transitions t
 
 Once trajectories exist, they can be validated, aggregated into experiments, and used as inputs to learning systems.
 
-------------------------------------------------------------
+---
 
 # Why This Architecture Exists
 
@@ -42,7 +42,7 @@ Executable World Models addresses this by enforcing:
 
 Together these layers form the architecture required to study intelligent systems.
 
-------------------------------------------------------------
+---
 
 # Core Idea: Trajectories, Not Outputs
 
@@ -50,9 +50,8 @@ Traditional agent frameworks return responses.
 
 EWM records trajectories.
 
-Responses answer questions.
-
-Trajectories explain behavior.
+**Responses answer questions.**
+**Trajectories explain behavior.**
 
 Trajectories allow systems to:
 
@@ -63,12 +62,13 @@ Trajectories allow systems to:
 
 This architectural shift is the foundation of the project.
 
-------------------------------------------------------------
+---
 
 # System Architecture
 
 The system is organized as a layered experimental architecture:
 
+```
 tokens
 ↓
 models
@@ -86,19 +86,21 @@ experiments
 environments
 ↓
 learning
+```
 
 Each layer contributes a specific capability:
 
-Layer | Role
-Agents | Execute decision logic
-Constraints | Enforce runtime safety limits
-Artifacts | Record decision trajectories
-Evaluation | Verify structural correctness
-Experiments | Aggregate trajectories
-Environments | Provide world interaction
-Learning | Consume trajectories as datasets
+| Layer | Role |
+|-------|------|
+| Agents | Execute decision logic |
+| Constraints | Enforce runtime safety limits |
+| Artifacts | Record decision trajectories |
+| Evaluation | Verify structural correctness |
+| Experiments | Aggregate trajectories |
+| Environments | Provide world interaction |
+| Learning | Consume trajectories as datasets |
 
-------------------------------------------------------------
+---
 
 # Evidence Policy Feedback (v0.8.5)
 
@@ -106,7 +108,9 @@ Version v0.8.5 completes the learning loop with deterministic policy feedback.
 
 The architectural loop is now:
 
+```
 environment → trajectories → artifacts → evaluation → experiments → evidence dataset → policy update → better decisions
+```
 
 Key concepts:
 
@@ -141,16 +145,18 @@ python3 scripts/demo_policy_feedback_loop.py
 ```
 
 The evidence policy file is a simple JSON structure containing:
-- default_action: The most common action across experiments
-- action_preferences_by_symbol: Most common action for each trading symbol
-- action_preferences_by_step: Most common action at each step position
+
+- `default_action`: The most common action across experiments
+- `action_preferences_by_symbol`: Most common action for each trading symbol
+- `action_preferences_by_step`: Most common action at each step position
 
 Example demo:
 
+```bash
 python3 scripts/demo_policy_feedback_loop.py
+```
 
-
-------------------------------------------------------------
+---
 
 # Trading Environment Example
 
@@ -162,10 +168,13 @@ This domain is useful because it produces structured decision sequences that res
 
 Example demo:
 
+```bash
 python3 scripts/demo_learning_loop.py
+```
 
 Example output:
 
+```
 STEP 1: Select Learning Runs
 Selected 2 runs
 
@@ -175,41 +184,53 @@ Rows exported: 8
 STEP 3: Run Stub Learner
 Total runs: 2
 Total steps: 8
+```
 
-------------------------------------------------------------
+---
 
 # Local Development
 
 Setup:
 
+```bash
 make setup
 make lint
 pytest
+```
 
 Run demo:
 
+```bash
 python3 scripts/demo_learning_loop.py
+```
 
-------------------------------------------------------------
+---
 
 # AWS Deployment
 
 Deploy the runtime:
 
+```bash
 make deploy-agentcore-loop
+```
 
 Verify health:
 
+```
 /health
+```
 
 Run integration tests:
 
+```bash
 pytest tests/integration
+```
 
-------------------------------------------------------------
+---
 
 # Repository Structure
 
+```
 services/core/environment/   world environments
 services/core/eval/          structural evaluation
 services/core/learning/      learning scaffold
@@ -218,8 +239,9 @@ services/cli/                operational CLI
 scripts/                     demos and tools
 tests/                       unit and integration tests
 docs/                        architecture documentation
+```
 
-------------------------------------------------------------
+---
 
 # Essay Series
 
@@ -233,13 +255,13 @@ This repository accompanies the research essay series:
 
 Essays are published on Substack.
 
-------------------------------------------------------------
+---
 
 # Project Status
 
 Current milestone:
 
-v0.8.5 — Evidence Policy Feedback Loop
+**v0.8.5 — Evidence Policy Feedback Loop**
 
 The system now supports:
 

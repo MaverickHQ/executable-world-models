@@ -13,16 +13,21 @@ Tokens → Models → Agents → Constraints → Artifacts → Evaluation → Ex
 ## Stack Layers
 
 ### 1. Tokens
+
 Raw input tokens that flow into the system. These are the fundamental units of computation.
 
 ### 2. Models
+
 The language models (e.g., Claude, Bedrock) that process tokens and generate outputs. Models are invoked through a deterministic interface that tracks all calls.
 
 ### 3. Agents
+
 Agent implementations that coordinate model calls, tool usage, and memory operations. The agent loop enforces hard budget boundaries on every execution.
 
 ### 4. Constraints
+
 Budget enforcement mechanisms that halt execution when limits are exceeded:
+
 - `max_steps`: Maximum number of agent steps
 - `max_tool_calls`: Maximum number of tool invocations
 - `max_model_calls`: Maximum number of model calls
@@ -30,25 +35,32 @@ Budget enforcement mechanisms that halt execution when limits are exceeded:
 - `max_memory_bytes`: Maximum memory bytes
 
 ### 5. Artifacts
+
 Generated outputs from agent execution:
+
 - Trade tapes: Sequence of trading actions
 - Execution ledgers: Detailed execution logs
 - State snapshots: Final state after execution
 
 ### 6. Evaluation
+
 Evaluation framework that assesses agent behavior:
+
 - Experiment configuration and execution
 - Run evaluation against criteria
 - Metrics collection and reporting
 
 ### 7. Experiments
+
 Experiment definitions that combine:
+
 - Strategy specifications
 - Budget configurations
 - Market paths
 - Evaluation criteria
 
 ### 8. Environments (NEW)
+
 The environment layer provides stateful world abstractions for agents to interact with.
 
 ```mermaid
@@ -95,7 +107,9 @@ graph TB
 ## Current Runtime Stack
 
 ### Local Runtime
+
 The local runtime includes:
+
 - Deterministic market simulator
 - JSON strategy specification (BUY / SELL / HOLD)
 - State transition engine
@@ -103,7 +117,9 @@ The local runtime includes:
 - Replay tooling
 
 ### AWS Runtime (AgentCore)
+
 The AWS deployment layers the same deterministic logic behind:
+
 - Lambda handlers (Base, Tools, Memory, Loop)
 - HTTP API Gateway
 - S3 artifact storage
@@ -112,14 +128,16 @@ The AWS deployment layers the same deterministic logic behind:
 
 ## Trading Environment Layer (Experimental)
 
-The new **Trading Environment Layer** introduces a stateful world abstraction that sits above experiments:
+The new **Trading Environment Layer** introduces a stateful world abstraction that sits above experiments.
 
 ### What It Is
+
 - A deterministic market path replay environment
 - A stateful interface where agents can step through market observations
 - Designed to support future work in Essay 8 ("Agents Need Worlds")
 
 ### What It Is NOT
+
 - A full execution simulator with order matching
 - A broker with slippage modeling
 - An RL trainer with reward optimization
@@ -151,6 +169,7 @@ Experiments → TradingEnvironment → Market Observations
 ```
 
 This architectural bridge enables future work in:
+
 - Planning with environmental feedback
 - World model integration
 - Multi-step agent experiments
@@ -158,6 +177,7 @@ This architectural bridge enables future work in:
 ## Compatibility
 
 The trading environment layer is designed to be fully backward-compatible:
+
 - Existing runtime/evaluation semantics are preserved
 - No changes to existing AWS behavior
 - All existing tests continue to pass
@@ -199,9 +219,10 @@ The `steps` array represents the sequential market observations that `MarketPath
 
 ## Learning Loop Scaffold (Experimental)
 
-The **Learning Loop Scaffold** provides infrastructure for consuming validated experiment trajectories as inputs for future adaptation. This is NOT RL training - it's a deterministic scaffold that proves the architecture can close the loop from experiments to learning.
+The **Learning Loop Scaffold** provides infrastructure for consuming validated experiment trajectories as inputs for future adaptation. This is NOT RL training — it's a deterministic scaffold that proves the architecture can close the loop from experiments to learning.
 
 ### What It Is
+
 - A deterministic trajectory export pipeline
 - A selector for structurally valid runs
 - A replay/iteration interface for trajectory datasets
@@ -209,6 +230,7 @@ The **Learning Loop Scaffold** provides infrastructure for consuming validated e
 - Architecture proof-of-concept for Essay 10
 
 ### What It Is NOT
+
 - RL training with reward optimization
 - Policy-gradient learning
 - A broker simulator
@@ -244,12 +266,14 @@ Experiments → Selector → Dataset Export → Learning Dataset → Stub Learne
 The **Policy Feedback Layer** completes the learning loop by converting experiment evidence into a deterministic policy that can influence future trading decisions.
 
 ### What It Is
+
 - A deterministic policy builder from learning reports
 - A decision helper that applies evidence-based preferences
 - A complete learning loop: experiments → evidence → policy → decisions
 - Architecture proof that Essay 10's loop is closed
 
 ### What It Is NOT
+
 - RL training with reward optimization
 - Policy gradient learning
 - Model weight training
@@ -276,6 +300,7 @@ Experiments → Trajectories → Artifacts → Evaluation → Experiments
 ### Decision Logic
 
 The policy applicator uses simple deterministic rules:
+
 1. If symbol has a known preference, use that action
 2. Else if step position has a known preference, use that action
 3. Else fall back to default_action (typically "hold")
@@ -298,4 +323,4 @@ The complete learning loop now works as follows:
 4. **Build Policy**: Convert learning report to evidence policy with action preferences
 5. **Apply Policy**: Consult evidence policy when making new trading decisions
 
-This loop demonstrates that validated experiment trajectories can meaningfully influence future behavior - without requiring RL training or heavy ML infrastructure.
+This loop demonstrates that validated experiment trajectories can meaningfully influence future behavior — without requiring RL training or heavy ML infrastructure.
