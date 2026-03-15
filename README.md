@@ -158,6 +158,56 @@ python3 scripts/demo_policy_feedback_loop.py
 
 ---
 
+# Policy-Guided Agent Demo (v0.8.5.1)
+
+Version v0.8.5.1 adds a policy-guided trading agent that actually uses the evidence policy to make trading decisions.
+
+The complete loop now reaches **future decisions**, not just policy creation:
+
+```
+environment → trajectories → artifacts → evaluation → experiments 
+    → evidence dataset → learning report → evidence policy 
+    → policy-guided agent → decisions
+```
+
+### What the Agent Does
+
+- Loads an evidence policy (JSON file with action preferences)
+- Consults the policy for each trading decision
+- Uses symbol preferences first, then step preferences
+- Falls back to default action when no evidence exists
+- Provides explanations for each decision
+
+This is NOT RL training - it's deterministic policy-guided decision making.
+
+### Commands
+
+```bash
+# Run policy-guided agent demo
+python3 scripts/demo_policy_guided_trading_agent.py
+
+# Run end-to-end learning loop demo
+python3 scripts/demo_end_to_end_learning_loop.py
+```
+
+### Example Output
+
+```
+--- Step 0 ---
+  Observation: {'symbol': 'AAPL', 'step': 0, 'price': 150.0}
+  Explanation: Decision for AAPL at step 0: hold (policy preference for symbol)
+  Action: {'type': 'hold', 'symbol': 'AAPL', 'qty': 0, 'source': 'symbol', 'policy_used': True}
+```
+
+### What This Proves
+
+1. Evidence policy can be loaded and consumed
+2. Agent makes deterministic decisions based on policy
+3. Policy preferences take precedence over defaults
+4. Complete loop from experiments to decisions works end-to-end
+
+---
+
 # Trading Environment Example
 
 The reference environment used in this repository is a deterministic market-path replay.
