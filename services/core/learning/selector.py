@@ -78,7 +78,6 @@ def select_learning_runs(
     selected_runs: List[dict] = []
     
     for run in runs:
-        run_id = run.get("run_id", "")
         manifest_valid = run.get("manifest_valid", False)
         integrity_errors = run.get("integrity_errors", [])
         truncated = run.get("truncated_by_budget")

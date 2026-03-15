@@ -9,8 +9,6 @@ These tests verify the policy-guided trading agent:
 
 from __future__ import annotations
 
-import pytest
-
 from services.core.agent import PolicyGuidedAgent
 from services.core.policy import DEFAULT_ACTION
 

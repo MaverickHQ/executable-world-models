@@ -12,17 +12,15 @@ from pathlib import Path
 import pytest
 
 from services.core.agent import PolicyGuidedAgent
-from services.core.environment import TradingEnvironment
 from services.core.learning import (
-    select_learning_runs,
     export_learning_dataset,
     run_stub_learner,
+    select_learning_runs,
 )
 from services.core.policy import (
-    load_evidence_policy,
     build_evidence_policy_from_learning_report,
+    load_evidence_policy,
 )
-
 
 # Test fixture path
 FIXTURE_PATH = Path("tests/fixtures/learning_experiment")

@@ -27,7 +27,6 @@ from services.core.learning import (
     select_learning_runs,
 )
 
-
 # Path to fixture experiment
 FIXTURE_DIR = Path(__file__).parent.parent / "fixtures" / "learning_experiment"
 
@@ -116,7 +115,7 @@ class TestLearningEndToEnd:
         assert "AAPL" in symbol_counts
         assert "MSFT" in symbol_counts
 
-        print(f"✅ Full learning loop test passed!")
+        print("✅ Full learning loop test passed!")
         print(f"   - Selected runs: {len(selected_runs)}")
         print(f"   - Exported rows: {row_count}")
         print(f"   - Report: total_runs={report['total_runs']}, total_steps={report['total_steps']}")
