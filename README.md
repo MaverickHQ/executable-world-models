@@ -1,246 +1,95 @@
 # Executable World Models
 
-Executable World Models (EWM) is a research framework for building deterministic experimental systems around intelligent agents.
+### Agent runtimes that execute, evaluate, and learn — on AWS
 
-The goal of the project is NOT trading performance and NOT agent automation.
+This repository accompanies the **[Executable World Models](https://harveygill.substack.com/p/building-the-runtime-for-agent-based)** essay series published on Substack. It is the companion to the **[Beyond Tokens](https://github.com/MaverickHQ/beyond-tokens)** series, which established why world models matter. This series builds them.
 
-The goal is architectural:
-
-> to make intelligent behavior reproducible, inspectable, and experimentally verifiable.
-
-Most agent systems generate outputs.
-
-EWM generates trajectories.
-
-A trajectory is the sequence of observations, decisions, and state transitions that occur while an agent interacts with an environment.
-
-Once trajectories exist, they can be validated, aggregated into experiments, and used as inputs to learning systems.
+![Executable World Models — release roadmap](./docs/executable_world_models_readme.png)
 
 ---
 
-# Why This Architecture Exists
+## What this repository builds
 
-Modern agent systems are powerful but opaque.
+Most agent frameworks focus on what agents can do — tools, skills, orchestration. This project focuses on something different: what it takes for agent behavior to be **observable, reproducible, and improvable over time**.
 
-Agents can call tools, execute code, retrieve data, and orchestrate workflows. However, most systems still lack the structure required to study behavior.
+The architecture is built in layers, each release adding one:
 
-Typical problems include:
+- **Execution** — a deterministic agent runtime deployed on AWS, executing decisions under explicit budget constraints and emitting structured artifacts for every run
+- **Evaluation** — a structural validity layer that verifies artifact integrity before runs are treated as evidence
+- **Environments** — a stateful world that evolves step by step, so agents interact with something that changes rather than just querying APIs
+- **Learning** — an evidence policy that converts validated experiment results into decision guidance for future runs, without retraining the model
 
-- Non-reproducible executions
-- Logs without structural guarantees
-- Experiments that cannot be compared reliably
-- Learning systems that lack clean trajectory data
-
-Executable World Models addresses this by enforcing:
-
-- deterministic execution
-- explicit artifact generation
-- structural evaluation
-- experiment aggregation
-- environment interaction
-- learning-ready trajectory export
-
-Together these layers form the architecture required to study intelligent systems.
+The result is a system that produces **trajectories**, not just outputs. Trajectories can be replayed, validated, compared across experiments, and used as the dataset from which intelligent systems can begin to improve.
 
 ---
 
-# Core Idea: Trajectories, Not Outputs
+## Releases
 
-Traditional agent frameworks return responses.
+Each release adds one layer to the architecture. The system compounds — it does not pivot.
 
-EWM records trajectories.
-
-**Responses answer questions.**
-**Trajectories explain behavior.**
-
-Trajectories allow systems to:
-
-- replay decisions
-- compare strategies across experiments
-- generate structured learning datasets
-- study how agents interact with environments
-
-This architectural shift is the foundation of the project.
+| Release | Layer added | Essay |
+|---|---|---|
+| [`v0.8.1-Agent-Runtime`](https://github.com/MaverickHQ/executable-world-models/releases/tag/v0.8.1-Agent-Runtime) | Execution — agent runtime deployed on AWS | [From Theory to Runtime](https://harveygill.substack.com/p/building-the-runtime-for-agent-based) |
+| [`v0.8.3`](https://github.com/MaverickHQ/executable-world-models/releases/tag/v0.8.3) | Evaluation + environments — structural validity and deterministic world | [Evaluation Is a Primitive, Not a Report](https://harveygill.substack.com/p/evaluation-is-a-primitive-not-a-report) · [Tools Return Results. Environments Change the World.](https://harveygill.substack.com/p/tools-skills-and-the-missing-layer) |
+| [`v0.8.5`](https://github.com/MaverickHQ/executable-world-models/releases/tag/v0.8.5) | Evidence policy — learning without retraining | [Learning Without Retraining](https://harveygill.substack.com/p/agents-that-learn-from-experiments) |
+| [`v0.8.5.1`](https://github.com/MaverickHQ/executable-world-models/releases/tag/v0.8.5.1) | Policy-guided agent — evidence feeding future decisions | [Learning Without Retraining](https://harveygill.substack.com/p/agents-that-learn-from-experiments) |
 
 ---
 
-# System Architecture
+## Essays
 
-The system is organized as a layered experimental architecture:
+This series follows directly from [Beyond Tokens](https://github.com/MaverickHQ/beyond-tokens). That series made the case for why world models matter. This series runs that argument as infrastructure.
+
+| Essay | What it covers |
+|---|---|
+| [From Theory to Runtime](https://harveygill.substack.com/p/building-the-runtime-for-agent-based) | The Agent Runtime goes live on AWS — execution, artifacts, persistence, telemetry |
+| [Evaluation Is a Primitive, Not a Report](https://harveygill.substack.com/p/evaluation-is-a-primitive-not-a-report) | Structural validation that turns runs into trusted evidence |
+| [Tools Return Results. Environments Change the World.](https://harveygill.substack.com/p/tools-skills-and-the-missing-layer) | Why environments are the missing layer in most agent architectures |
+| [Learning Without Retraining](https://harveygill.substack.com/p/agents-that-learn-from-experiments) | How agent systems improve decisions without changing the model |
+| [The Architecture of Intelligent Systems](https://harveygill.substack.com/p/the-architecture-of-intelligent-systems) | What both series, taken together, mean for how intelligent systems are built |
+
+**Recommended entry point:** start with [From Theory to Runtime](https://harveygill.substack.com/p/building-the-runtime-for-agent-based), which introduces the runtime and links directly to the code. Read the earlier [Beyond Tokens](https://harveygill.substack.com/p/beyond-tokens) series for the architectural argument that precedes it.
+
+---
+
+## Architecture
+
+The system is a layered experimental stack. Each layer makes agent behavior more observable and improvable.
 
 ```
-tokens
-↓
-models
-↓
 agents
 ↓
-constraints
+constraints        — budget: steps · tool calls · model calls · memory
 ↓
-artifacts
+artifacts          — decision.json · trajectory.json · deltas.json
 ↓
-evaluation
+evaluation         — structural validity · integrity checks
 ↓
-experiments
+experiments        — aggregate across runs · integrity rate · success rate
 ↓
-environments
+environments       — stateful · deterministic · step-by-step
 ↓
-learning
+evidence policy    — patterns → decision guidance · no retraining required
 ```
 
-Each layer contributes a specific capability:
-
-| Layer | Role |
-|-------|------|
-| Agents | Execute decision logic |
-| Constraints | Enforce runtime safety limits |
-| Artifacts | Record decision trajectories |
-| Evaluation | Verify structural correctness |
-| Experiments | Aggregate trajectories |
-| Environments | Provide world interaction |
-| Learning | Consume trajectories as datasets |
+The upper layers generate behavior. The lower layers make that behavior observable, trustworthy, and learnable from.
 
 ---
 
-# Evidence Policy Feedback (v0.8.5)
+## The learning loop
 
-Version v0.8.5 completes the learning loop with deterministic policy feedback.
-
-The architectural loop is now:
+Version `v0.8.5` completes the learning loop. The architecture now runs end to end:
 
 ```
-environment → trajectories → artifacts → evaluation → experiments → evidence dataset → policy update → better decisions
+environment → trajectories → artifacts → evaluation
+    → experiments → evidence dataset → evidence policy → future decisions
 ```
 
-Key concepts:
-
-- **experiments** produce evidence (validated trajectories)
-- **evidence** is analyzed by the learner stub to produce a learning report
-- **policy** is built from the report, capturing action preferences by symbol and step
-- **decisions** can consult the evidence policy to influence future actions
-
-This is NOT reinforcement learning:
-
-- No model weights are learned
-- No gradient descent occurs
-- No exploration/exploitation tradeoff
-- Simply: past experiment evidence influences future decisions
-
-Commands:
-
-```bash
-# Export learning dataset
-python3 scripts/export_learning_dataset.py
-
-# Run learner stub
-python3 scripts/run_learning_stub.py
-
-# Build evidence policy
-python3 scripts/build_evidence_policy.py \
-  --learning-report outputs/learning/demo_learning_report.json \
-  --output outputs/learning/evidence_policy.json
-
-# Run policy feedback demo
-python3 scripts/demo_policy_feedback_loop.py
-```
-
-The evidence policy file is a simple JSON structure containing:
-
-- `default_action`: The most common action across experiments
-- `action_preferences_by_symbol`: Most common action for each trading symbol
-- `action_preferences_by_step`: Most common action at each step position
-
-Example demo:
-
-```bash
-python3 scripts/demo_policy_feedback_loop.py
-```
+This is not reinforcement learning. No model weights are updated. No gradient descent occurs. What changes is the decision architecture — past experiment evidence informs future choices, without touching the model.
 
 ---
 
-# Policy-Guided Agent Demo (v0.8.5.1)
-
-Version v0.8.5.1 adds a policy-guided trading agent that actually uses the evidence policy to make trading decisions.
-
-The complete loop now reaches **future decisions**, not just policy creation:
-
-```
-environment → trajectories → artifacts → evaluation → experiments 
-    → evidence dataset → learning report → evidence policy 
-    → policy-guided agent → decisions
-```
-
-### What the Agent Does
-
-- Loads an evidence policy (JSON file with action preferences)
-- Consults the policy for each trading decision
-- Uses symbol preferences first, then step preferences
-- Falls back to default action when no evidence exists
-- Provides explanations for each decision
-
-This is NOT RL training - it's deterministic policy-guided decision making.
-
-### Commands
-
-```bash
-# Run policy-guided agent demo
-python3 scripts/demo_policy_guided_trading_agent.py
-
-# Run end-to-end learning loop demo
-python3 scripts/demo_end_to_end_learning_loop.py
-```
-
-### Example Output
-
-```
---- Step 0 ---
-  Observation: {'symbol': 'AAPL', 'step': 0, 'price': 150.0}
-  Explanation: Decision for AAPL at step 0: hold (policy preference for symbol)
-  Action: {'type': 'hold', 'symbol': 'AAPL', 'qty': 0, 'source': 'symbol', 'policy_used': True}
-```
-
-### What This Proves
-
-1. Evidence policy can be loaded and consumed
-2. Agent makes deterministic decisions based on policy
-3. Policy preferences take precedence over defaults
-4. Complete loop from experiments to decisions works end-to-end
-
----
-
-# Trading Environment Example
-
-The reference environment used in this repository is a deterministic market-path replay.
-
-The environment provides agents with sequential market observations and records the resulting actions.
-
-This domain is useful because it produces structured decision sequences that resemble real-world planning problems.
-
-Example demo:
-
-```bash
-python3 scripts/demo_learning_loop.py
-```
-
-Example output:
-
-```
-STEP 1: Select Learning Runs
-Selected 2 runs
-
-STEP 2: Export Learning Dataset
-Rows exported: 8
-
-STEP 3: Run Stub Learner
-Total runs: 2
-Total steps: 8
-```
-
----
-
-# Local Development
-
-Setup:
+## Setup
 
 ```bash
 make setup
@@ -248,17 +97,64 @@ make lint
 pytest
 ```
 
-Run demo:
+---
+
+## Local demo
 
 ```bash
 python3 scripts/demo_learning_loop.py
 ```
 
+**What you should see**
+
+- Agent runs interact with the `MarketPathEnvironment` step by step
+- Structured artifacts are written for each run — `decision.json`, `trajectory.json`, `deltas.json`
+- Evaluation verifies structural integrity — valid runs proceed, invalid runs are excluded
+- Experiments aggregate results across runs
+- A learning dataset is exported from validated trajectories
+
 ---
 
-# AWS Deployment
+## Evidence policy demo (v0.8.5)
 
-Deploy the runtime:
+```bash
+# Export learning dataset from validated experiments
+python3 scripts/export_learning_dataset.py
+
+# Run the learner stub to produce a learning report
+python3 scripts/run_learning_stub.py
+
+# Build the evidence policy from the learning report
+python3 scripts/build_evidence_policy.py \
+  --learning-report outputs/learning/demo_learning_report.json \
+  --output outputs/learning/evidence_policy.json
+
+# Run the policy feedback loop demo
+python3 scripts/demo_policy_feedback_loop.py
+```
+
+---
+
+## Policy-guided agent demo (v0.8.5.1)
+
+```bash
+# Run the policy-guided agent
+python3 scripts/demo_policy_guided_trading_agent.py
+
+# Run the full end-to-end learning loop
+python3 scripts/demo_end_to_end_learning_loop.py
+```
+
+**What you should see**
+
+- Agent loads an evidence policy and consults it for each decision
+- Symbol-level preferences take priority, then step-level preferences, then the default action
+- Each decision includes an explanation of which policy source was used
+- The complete loop from experiments to decisions runs end to end
+
+---
+
+## AWS deployment
 
 ```bash
 make deploy-agentcore-loop
@@ -266,8 +162,8 @@ make deploy-agentcore-loop
 
 Verify health:
 
-```
-/health
+```bash
+curl https://<your-api-gateway-url>/health
 ```
 
 Run integration tests:
@@ -278,51 +174,37 @@ pytest tests/integration
 
 ---
 
-# Repository Structure
+## Repository structure
 
 ```
-services/core/environment/   world environments
-services/core/eval/          structural evaluation
-services/core/learning/      learning scaffold
+services/core/environment/   world environments — MarketPathEnvironment
+services/core/eval/          structural evaluation layer
+services/core/learning/      evidence policy and learning scaffold
 services/cli/                operational CLI
 
-scripts/                     demos and tools
+scripts/                     demos, export tools, and policy builders
 tests/                       unit and integration tests
-docs/                        architecture documentation
+infra/cdk/                   AWS infrastructure — API Gateway, Lambda, DynamoDB, S3
+docs/                        architecture diagrams
+outputs/learning/            experiment datasets and policy outputs
 ```
 
 ---
 
-# Essay Series
+## How to evaluate this repository in 10 minutes
 
-This repository accompanies the research essay series:
-
-1. Agents Can Plan
-2. Evaluation is a Primitive, Not a Report
-3. Agents Need Worlds
-4. The Architecture of Intelligent Systems
-5. Closing the Learning Loop
-
-Essays are published on Substack.
+1. Run `python3 scripts/demo_learning_loop.py` and observe that every run produces structured artifacts
+2. Check `outputs/learning/` — trajectories are exported as a clean dataset
+3. Run `python3 scripts/demo_policy_guided_trading_agent.py` and observe decisions being guided by prior evidence
+4. Open any `decision.json` artifact — the decision, trajectory, and state deltas are all explicit and inspectable
+5. The model does not change. The system improves through architecture.
 
 ---
 
-# Project Status
+## Project status
 
-Current milestone:
+Current milestone: **v0.8.5.1 — Policy-Guided Agent**
 
-**v0.8.5 — Evidence Policy Feedback Loop**
+The learning loop is complete. Experiments produce evidence. Evidence becomes policy. Policy informs future decisions.
 
-The system now supports:
-
-- deterministic agent execution
-- trajectory artifacts
-- structural evaluation
-- experiment aggregation
-- environment interaction
-- learning-ready dataset export
-- deterministic policy feedback from experiment evidence
-
-The learning loop is now complete: experiments produce evidence, evidence influences future decisions.
-
-This is NOT reinforcement learning - it's a deterministic policy-feedback scaffold.
+The next step is replacing the deterministic `MarketPathEnvironment` with a learned world model — at which point the environment itself becomes a predictive system rather than a replay. The experimental architecture remains unchanged.
