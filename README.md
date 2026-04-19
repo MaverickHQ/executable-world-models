@@ -8,6 +8,29 @@ This repository accompanies the **[Executable World Models](https://harveygill.s
 
 ---
 
+## A note on the agent in this system
+
+The trading agent in this repository is deterministic by 
+design. It implements a momentum strategy with explicit 
+rules — no LLM call, no API request, no prompt.
+
+This was a deliberate architectural choice. You cannot 
+validate a trajectory recording system, an evaluation 
+layer, or an experiment aggregation pipeline against an 
+agent whose decisions vary between runs. Determinism 
+makes the infrastructure verifiable. Once the 
+infrastructure is proven, the agent slot is replaceable.
+
+The Crucible project demonstrates exactly that: the same 
+infrastructure running with Claude in the agent slot. 
+The trajectories, artifacts, and evaluation layer are 
+identical. The decisions are not.
+
+This repository is the infrastructure proof. 
+Crucible-ewm is the LLM demonstration.
+
+---
+
 ## What this repository builds
 
 Most agent frameworks focus on what agents can do — tools, skills, orchestration. This project focuses on something different: what it takes for agent behavior to be **observable, reproducible, and improvable over time**.
@@ -208,3 +231,17 @@ Current milestone: **v0.8.5.1 — Policy-Guided Agent**
 The learning loop is complete. Experiments produce evidence. Evidence becomes policy. Policy informs future decisions.
 
 The next step is replacing the deterministic `MarketPathEnvironment` with a learned world model — at which point the environment itself becomes a predictive system rather than a replay. The experimental architecture remains unchanged.
+
+---
+
+## Part of the Crucible project
+
+This repository is the infrastructure foundation for a 
+connected body of work. The Crucible project places 
+Claude in the agent slot and demonstrates the same 
+architecture running with real LLM decision-making.
+
+- [crucible-ewm](https://github.com/MaverickHQ/crucible-ewm) 
+  — same infrastructure, Claude in the agent slot
+- [Beyond Tokens](https://github.com/MaverickHQ/beyond-tokens) 
+  — constrained LLM planning with deterministic verification
